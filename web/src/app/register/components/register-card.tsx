@@ -62,9 +62,9 @@ export function RegisterCard() {
   };
 
   return (
-    <div className="grid h-[calc(100vh-132px)] min-h-[640px] items-stretch gap-0 overflow-hidden rounded-xl border border-stone-200 bg-white/70 xl:grid-cols-2">
-      <section className="space-y-4 overflow-y-auto border-b border-stone-200 p-4 xl:border-r xl:border-b-0">
-          <div className="flex items-start justify-between gap-3">
+    <div className="grid min-h-0 items-stretch gap-0 overflow-hidden rounded-xl border border-stone-200 bg-white/70 xl:h-[calc(100vh-132px)] xl:min-h-[640px] xl:grid-cols-2">
+      <section className="space-y-4 border-b border-stone-200 p-3 sm:p-4 xl:overflow-y-auto xl:border-r xl:border-b-0">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-md bg-stone-100">
                 <UserPlus className="size-5 text-stone-600" />
@@ -73,7 +73,7 @@ export function RegisterCard() {
                 <h2 className="text-lg font-semibold tracking-tight">注册配置</h2>
               </div>
             </div>
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => void save()} disabled={isSaving || config.enabled}>
+            <Button className="h-9 w-full rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800 sm:w-auto" onClick={() => void save()} disabled={isSaving || config.enabled}>
               {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
               保存配置
             </Button>
@@ -125,12 +125,12 @@ export function RegisterCard() {
           </div>
 
           <div className="space-y-3 border-t border-stone-200 pt-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-stone-800">邮箱配置</h3>
                 <p className="mt-1 text-xs text-stone-500">可配置多个 provider，按启用顺序轮换。</p>
               </div>
-              <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-3 text-stone-700" onClick={addProvider} disabled={config.enabled}>
+              <Button type="button" variant="outline" className="h-9 w-full rounded-xl border-stone-200 bg-white px-3 text-stone-700 sm:w-auto" onClick={addProvider} disabled={config.enabled}>
                 <Plus className="size-4" />
                 添加
               </Button>
@@ -349,7 +349,7 @@ export function RegisterCard() {
 
       </section>
 
-      <section className="flex min-h-0 flex-col p-4">
+      <section className="flex min-h-[560px] flex-col p-3 sm:p-4 xl:min-h-0">
         <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -360,7 +360,7 @@ export function RegisterCard() {
                 {config.enabled ? "运行中" : "已停止"}
               </Badge>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 ["成功 / 成功率", `${stats.success} / ${stats.success_rate || 0}%`],
                 ["失败", stats.fail],
@@ -377,7 +377,7 @@ export function RegisterCard() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Button className="h-10 rounded-xl bg-stone-950 px-3 text-white hover:bg-stone-800" onClick={() => void toggle()} disabled={isSaving}>
                 {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : config.enabled ? <Square className="size-4" /> : <Play className="size-4" />}
                 {config.enabled ? "停止" : "启动"}
@@ -391,14 +391,14 @@ export function RegisterCard() {
                 保存
               </Button>
             </div>
-            <div className="flex items-center gap-2 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="flex items-start gap-2 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               <AlertTriangle className="size-4 shrink-0" />
               启动之前注意先保存配置。
             </div>
         </div>
 
         <div className="mt-4 flex min-h-0 flex-1 flex-col space-y-3 overflow-hidden border-t border-stone-200 pt-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-stone-900">实时日志</h3>
                 <p className="mt-1 text-xs text-amber-700">遇到 HTTP 状态码 400 等错误，基本是邮箱滥用被封，需要更换新的域名邮箱。</p>
@@ -407,7 +407,7 @@ export function RegisterCard() {
                 {logs.length}
               </Badge>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto border border-stone-200 bg-white/70 p-3 font-mono text-xs leading-6">
+            <div className="wrap-anywhere min-h-0 flex-1 overflow-y-auto border border-stone-200 bg-white/70 p-3 font-mono text-xs leading-6">
               {logs.length === 0 ? (
                 <div className="text-stone-500">暂无日志</div>
               ) : (

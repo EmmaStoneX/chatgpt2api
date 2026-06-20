@@ -45,7 +45,7 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="grid h-full min-h-0 gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div className="grid min-h-0 gap-6 lg:h-full lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-8">
       <section className="flex min-h-0 flex-col lg:border-r lg:border-stone-200/70 lg:pr-8 dark:lg:border-white/10">
         <div className="border-b border-stone-200/70 pb-3 dark:border-white/10">
           <h2 className="text-sm font-medium text-stone-500 dark:text-stone-400">请求</h2>

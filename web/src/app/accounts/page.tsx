@@ -909,7 +909,7 @@ function AccountsPageContent() {
                   <button
                     key={model.id}
                     type="button"
-                    className="inline-flex cursor-pointer items-center rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 transition hover:border-stone-300 hover:bg-stone-50"
+                    className="inline-flex max-w-full cursor-pointer items-center rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 transition hover:border-stone-300 hover:bg-stone-50"
                     onClick={() => {
                       void navigator.clipboard.writeText(model.id);
                       toast.success("模型名已复制");
@@ -922,7 +922,7 @@ function AccountsPageContent() {
                       aria-hidden="true"
                       className="mr-1.5 size-3.5 shrink-0"
                     />
-                    {model.id}
+                    <span className="min-w-0 truncate">{model.id}</span>
                   </button>
                 ))
               ) : isLoadingModels ? (
@@ -945,7 +945,7 @@ function AccountsPageContent() {
           </div>
 
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <div className="relative min-w-[260px]">
+            <div className="relative w-full min-w-0 lg:w-[260px]">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
               <Input
                 value={query}

@@ -118,6 +118,8 @@
   }
   html,
   body {
+    width: 100%;
+    overflow-x: hidden;
     background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(245, 239, 231, 0.96) 42%, rgba(240, 235, 227, 0.99) 100%);
     overscroll-behavior: none;
   }
@@ -140,6 +142,11 @@
 
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
 

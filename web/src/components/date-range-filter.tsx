@@ -2,6 +2,7 @@
 
 import { format, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ type DateRangeFilterProps = {
 };
 
 export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilterProps) {
+  const [isCompact, setIsCompact] = useState(false);
   const selected: DateRange | undefined = startDate
     ? {
         from: parse(startDate, "yyyy-MM-dd", new Date()),
@@ -25,22 +27,30 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
 
   const label = startDate ? `${startDate} 至 ${endDate || startDate}` : "选择日期范围";
 
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
   return (
-    <Field className="w-[240px]">
+    <Field className="w-full sm:w-[240px]">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="h-10 justify-start rounded-xl border-stone-200 bg-white px-3 font-normal text-stone-700">
+          <Button variant="outline" className="h-10 w-full min-w-0 justify-start rounded-xl border-stone-200 bg-white px-3 font-normal text-stone-700">
             <CalendarIcon className="size-4 text-stone-400" />
-            {label}
+            <span className="min-w-0 truncate">{label}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-3" align="start">
+        <PopoverContent className="max-w-[calc(100vw-1rem)] overflow-x-auto p-3" align="start">
           <Calendar
             mode="range"
             defaultMonth={selected?.from}
             selected={selected}
             onSelect={(value) => onChange(value?.from ? format(value.from, "yyyy-MM-dd") : "", value?.to ? format(value.to, "yyyy-MM-dd") : "")}
-            numberOfMonths={2}
+            numberOfMonths={isCompact ? 1 : 2}
           />
         </PopoverContent>
       </Popover>

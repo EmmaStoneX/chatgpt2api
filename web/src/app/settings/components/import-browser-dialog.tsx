@@ -62,7 +62,7 @@ export function ImportBrowserDialog() {
 
   return (
     <Dialog open={browserOpen} onOpenChange={setBrowserOpen}>
-      <DialogContent showCloseButton={false} className="max-h-[90vh] max-w-5xl rounded-2xl p-6">
+      <DialogContent showCloseButton={false} className="w-[min(94vw,64rem)] rounded-2xl p-6">
         <DialogHeader className="gap-2">
           <DialogTitle>选择要导入的账号</DialogTitle>
           <DialogDescription className="text-sm leading-6">
@@ -71,7 +71,7 @@ export function ImportBrowserDialog() {
         </DialogHeader>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative min-w-[260px]">
+          <div className="relative w-full min-w-0 lg:w-[260px]">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
             <Input
               value={fileQuery}
@@ -80,7 +80,7 @@ export function ImportBrowserDialog() {
               className="h-10 rounded-xl border-stone-200 bg-white pl-10"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={pageSize} onValueChange={(value) => setPageSize(value as (typeof PAGE_SIZE_OPTIONS)[number])}>
               <SelectTrigger className="h-10 w-[120px] rounded-xl border-stone-200 bg-white">
                 <SelectValue />
@@ -133,12 +133,12 @@ export function ImportBrowserDialog() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-stone-500">
+        <div className="flex flex-col gap-3 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
           <span>
             第 {filteredFiles.length === 0 ? 0 : (safeFilePage - 1) * currentPageSize + 1} -{" "}
             {Math.min(safeFilePage * currentPageSize, filteredFiles.length)} 条，共 {filteredFiles.length} 条
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <Button
               variant="outline"
               className="h-9 rounded-xl border-stone-200 bg-white px-3"

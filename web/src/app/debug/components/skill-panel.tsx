@@ -159,7 +159,7 @@ ${skillEn}
               </Button>
             </div>
           </div>
-          <pre className="flex-1 whitespace-pre-wrap p-4 font-mono text-sm leading-6">
+          <pre className="wrap-anywhere flex-1 whitespace-pre-wrap p-4 font-mono text-sm leading-6">
             {item.prompt}
           </pre>
         </div>

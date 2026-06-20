@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Copy, Download, ImageIcon, LoaderCircle, Maximize2, Plus, RefreshCw, Search, Tag, Trash2, X } from "lucide-react";
+import { Archive, CalendarDays, ChevronLeft, ChevronRight, Copy, Download, ImageIcon, LoaderCircle, Maximize2, Plus, RefreshCw, Search, Tag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { DateRangeFilter } from "@/components/date-range-filter";
@@ -373,11 +373,13 @@ function ImageManagerContent() {
                   try { const r = await compressAllImages(); setCompressResult(`已压缩${r.saved_mb}MB`); void loadStorage(); }
                   catch { setCompressResult("压缩失败"); }
                 }}>
-                🗜️ 压缩优化
+                <Archive className="mr-1 size-3" />
+                压缩优化
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-600"
                 onClick={() => setDeleteMode("byDate")}>
-                🗑️ 按日期删除
+                <Trash2 className="mr-1 size-3" />
+                按日期删除
               </Button>
               <form onSubmit={async (e) => { e.preventDefault();
                 try {
@@ -385,9 +387,10 @@ function ImageManagerContent() {
                   toast.success(`已删除 ${r.removed} 张图片，释放 ${r.freed_mb ?? 0}MB`);
                   void loadStorage();
                 } catch { toast.error("清理失败"); }
-              }} className="flex items-center gap-1">
+              }} className="flex flex-wrap items-center gap-1">
                 <Button size="sm" variant="outline" className="h-7 text-xs border-amber-200 text-amber-700" type="submit">
-                  🧹 清理至
+                  <Trash2 className="mr-1 size-3" />
+                  清理至
                 </Button>
                 <Input className="h-7 w-14 text-xs text-center px-1" type="number" min={50} value={targetFreeMb}
                   onChange={(e) => setTargetFreeMb(Number(e.target.value) || 500)} />
@@ -408,7 +411,7 @@ function ImageManagerContent() {
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader><DialogTitle>按日期删除图片</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <label className="text-sm text-stone-600 shrink-0">删除</label>
               <Input className="h-9 text-sm" type="date" value={deleteStartDate} onChange={(e) => setDeleteStartDate(e.target.value)} />
               <span className="text-sm text-stone-400">之前的图片</span>
@@ -620,7 +623,7 @@ function ImageManagerContent() {
               </div>
             )})}
           </div>
-          <div className="flex items-center justify-end gap-2 border-t border-stone-100 px-4 py-3 text-sm text-stone-500">
+          <div className="flex items-center justify-end gap-2 overflow-x-auto border-t border-stone-100 px-4 py-3 text-sm text-stone-500">
             <span>第 {safePage} / {pageCount} 页，共 {filteredItems.length} 张</span>
             <Button variant="outline" size="icon" className="size-9 rounded-lg border-stone-200 bg-white" disabled={safePage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
               <ChevronLeft className="size-4" />

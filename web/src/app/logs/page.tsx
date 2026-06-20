@@ -174,7 +174,7 @@ function LogsContent() {
               </label>
               {selectedIds.length > 0 ? <span>已选 {selectedIds.length} 条</span> : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="ghost" className="h-8 rounded-lg px-3 text-stone-500" onClick={() => void loadLogs()} disabled={isLoading}>
                 <RefreshCw className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
                 刷新
@@ -264,7 +264,7 @@ function LogsContent() {
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-end gap-2 border-t border-stone-100 px-4 py-3 text-sm text-stone-500">
+          <div className="flex items-center justify-end gap-2 overflow-x-auto border-t border-stone-100 px-4 py-3 text-sm text-stone-500">
             <span>第 {safePage} / {pageCount} 页，共 {items.length} 条</span>
             <Button variant="outline" size="icon" className="size-9 rounded-lg border-stone-200 bg-white" disabled={safePage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
               <ChevronLeft className="size-4" />
@@ -287,9 +287,9 @@ function LogsContent() {
                 {Object.entries(detailLog?.detail || {})
                   .filter(([key, value]) => key !== "urls" && typeof value !== "object")
                   .map(([key, value]) => (
-                    <div key={key} className="flex items-start justify-between gap-4">
+                    <div key={key} className="flex min-w-0 items-start justify-between gap-4">
                       <span className="text-stone-400">{key}</span>
-                      <span className="text-right font-medium break-all text-stone-700">{String(value)}</span>
+                      <span className="wrap-anywhere min-w-0 text-right font-medium text-stone-700">{String(value)}</span>
                     </div>
                   ))}
               </div>
@@ -310,7 +310,7 @@ function LogsContent() {
                   ))}
                 </div>
               ) : null}
-              <pre className="max-h-[72vh] overflow-auto rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs leading-6 text-stone-700">
+              <pre className="wrap-anywhere max-h-[72vh] overflow-auto whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs leading-6 text-stone-700">
                 {JSON.stringify(detailLog?.detail || {}, null, 2)}
               </pre>
             </div>

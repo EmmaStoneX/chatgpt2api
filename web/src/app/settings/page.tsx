@@ -79,8 +79,8 @@ function SettingsPageContent() {
     <>
       <SettingsDataController />
       <SettingsHeader />
-      <Tabs defaultValue="basic" className="space-y-4">
-        <div className="sticky top-3 z-20 overflow-x-auto rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur">
+      <Tabs defaultValue="basic" className="min-w-0 space-y-4">
+        <div className="sticky top-3 z-20 -mx-4 overflow-x-auto rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur sm:mx-0">
           <TabsList variant="line" className="min-w-max justify-start">
             {settingsTabs.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value} className="px-4">
@@ -89,28 +89,28 @@ function SettingsPageContent() {
             ))}
           </TabsList>
         </div>
-        <TabsContent value="basic">
+        <TabsContent value="basic" className="min-w-0">
           <ConfigCard />
         </TabsContent>
-        <TabsContent value="proxy">
+        <TabsContent value="proxy" className="min-w-0">
           <ProxyRuntimeCard />
         </TabsContent>
-        <TabsContent value="backup">
+        <TabsContent value="backup" className="min-w-0">
           <BackupSettingsCard />
         </TabsContent>
-        <TabsContent value="keys">
+        <TabsContent value="keys" className="min-w-0">
           <UserKeysCard />
         </TabsContent>
-        <TabsContent value="canvas">
+        <TabsContent value="canvas" className="min-w-0">
           <ThirdPartyAppsCard />
         </TabsContent>
-        <TabsContent value="api-docs">
+        <TabsContent value="api-docs" className="min-w-0">
           <ApiDocsCard />
         </TabsContent>
-        <TabsContent value="cpa">
+        <TabsContent value="cpa" className="min-w-0">
           <CPAPoolsCard />
         </TabsContent>
-        <TabsContent value="sub2api">
+        <TabsContent value="sub2api" className="min-w-0">
           <Sub2APIConnections />
         </TabsContent>
       </Tabs>

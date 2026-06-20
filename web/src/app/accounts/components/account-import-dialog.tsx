@@ -145,7 +145,7 @@ function MethodCard({
           <div className="rounded-xl bg-stone-100 p-3 text-stone-700">
             <Icon className="size-5" />
           </div>
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <div className="text-sm font-semibold text-stone-900">{title}</div>
             <div className="text-sm leading-6 text-stone-500">{description}</div>
           </div>
@@ -528,12 +528,12 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             <ArrowLeft className="size-4" />
             返回导入方式
           </button>
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm leading-6 text-stone-600 space-y-2">
+          <div className="space-y-2 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm leading-6 text-stone-600">
             <div className="font-medium text-stone-800">操作步骤</div>
-            <ol className="list-decimal pl-5 space-y-1">
+            <ol className="space-y-1 pl-5 list-decimal">
               <li>（可选）填写你 ChatGPT 账号的邮箱，登录页会预填。</li>
               <li>点击下方"打开授权页面"，在新标签里登录自己的 ChatGPT 账号。</li>
-              <li>登录完成后浏览器会跳到 <code className="rounded bg-stone-200 px-1">platform.openai.com/auth/callback?code=...</code>。立刻从地址栏复制整段 URL（或开 F12 在 Network 里抓到 callback 那一行，右键 Copy → Copy URL）。</li>
+              <li>登录完成后浏览器会跳到 <code className="wrap-anywhere rounded bg-stone-200 px-1">platform.openai.com/auth/callback?code=...</code>。立刻从地址栏复制整段 URL（或开 F12 在 Network 里抓到 callback 那一行，右键 Copy → Copy URL）。</li>
               <li>把 callback URL 粘到下面输入框，点"完成导入"。</li>
             </ol>
           </div>
@@ -560,14 +560,14 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             </Button>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-2xl border border-stone-200 bg-white p-3 text-xs leading-6 text-stone-600 break-all font-mono">
+              <div className="wrap-anywhere max-h-32 overflow-y-auto rounded-2xl border border-stone-200 bg-white p-3 font-mono text-xs leading-6 text-stone-600 sm:max-h-40">
                 {oauthSession.authorize_url}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-xl border-stone-200 bg-white"
+                  className="w-full rounded-xl border-stone-200 bg-white sm:w-auto"
                   onClick={() => void handleCopyAuthorizeUrl()}
                 >
                   <Copy className="size-4" />
@@ -576,7 +576,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-xl border-stone-200 bg-white"
+                  className="w-full rounded-xl border-stone-200 bg-white sm:w-auto"
                   onClick={() => window.open(oauthSession.authorize_url, "_blank", "noopener,noreferrer")}
                 >
                   <ExternalLink className="size-4" />
@@ -585,7 +585,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-xl border-stone-200 bg-white"
+                  className="w-full rounded-xl border-stone-200 bg-white sm:w-auto"
                   onClick={() => {
                     setOauthSession(null);
                     setOauthCallbackInput("");
@@ -755,8 +755,11 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
           <Upload className="size-4" />
           导入
         </Button>
-        <DialogContent showCloseButton={false} className="rounded-2xl p-6">
-          <DialogHeader className="gap-2">
+        <DialogContent
+          showCloseButton={false}
+          className="flex w-[min(94vw,640px)] flex-col overflow-hidden rounded-2xl p-0"
+        >
+          <DialogHeader className="shrink-0 gap-2 border-b border-stone-100 px-5 py-4 sm:px-6">
             <DialogTitle>
               {method === "menu"
                 ? "导入账户"
@@ -785,9 +788,11 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             </DialogDescription>
           </DialogHeader>
 
-          {renderMethodBody()}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+            {renderMethodBody()}
+          </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="shrink-0 border-t border-stone-100 px-5 py-4 sm:px-6">
             <Button
               variant="secondary"
               className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"

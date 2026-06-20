@@ -31,14 +31,16 @@ export default function DebugPage() {
   }
 
   return (
-    <Tabs defaultValue="skills" className="mx-auto flex min-h-[calc(100vh-49px)] w-full max-w-[1600px] flex-col gap-4 px-4 pt-3 pb-6 md:px-8">
-      <TabsList variant="line" className="w-full">
+    <Tabs defaultValue="skills" className="mx-auto flex min-h-[calc(100vh-49px)] w-full max-w-[1600px] min-w-0 flex-col gap-4 px-0 pt-3 pb-6 md:px-8">
+      <div className="overflow-x-auto px-1">
+      <TabsList variant="line" className="min-w-max">
         {tabs.map(({ value, title }) => (
           <TabsTrigger key={value} value={value}>
             {title}
           </TabsTrigger>
         ))}
       </TabsList>
+      </div>
       <TabsContent value="skills">
         <SkillPanel />
       </TabsContent>
