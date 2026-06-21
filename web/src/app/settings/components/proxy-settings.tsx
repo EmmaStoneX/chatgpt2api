@@ -148,7 +148,7 @@ export function ProxySettingsCard() {
                 value={formUrl}
                 onChange={(event) => setFormUrl(event.target.value)}
                 placeholder="http://user:pass@host:port 或 socks5://host:port"
-                className="h-11 rounded-xl border-stone-200 bg-white font-mono text-xs"
+                className="border-stone-200 bg-white font-mono text-xs"
               />
               <div className="text-xs text-stone-400">
                 支持 <code className="font-mono">http / https / socks4 / socks5 / socks5h</code>。
@@ -175,7 +175,7 @@ export function ProxySettingsCard() {
 
             <div className="flex items-center gap-2">
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="bg-stone-950 px-5 text-white hover:bg-stone-800"
                 onClick={() => void handleSave()}
                 disabled={isSaving || !dirty}
               >
@@ -184,7 +184,7 @@ export function ProxySettingsCard() {
               </Button>
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-stone-200 bg-white px-5 text-stone-700"
+                className="border-stone-200 bg-white px-5 text-stone-700"
                 onClick={() => void handleTest()}
                 disabled={isTesting}
               >

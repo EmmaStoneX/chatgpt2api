@@ -3,7 +3,12 @@
 import { login } from "@/lib/api";
 import { clearStoredAuthSession, getStoredAuthSession, setStoredAuthSession, type StoredAuthSession } from "@/store/auth";
 
-export async function getValidatedAuthSession(): Promise<StoredAuthSession | null> {
+type ValidateAuthOptions = {
+  clearOnFailure?: boolean;
+};
+
+export async function getValidatedAuthSession(options: ValidateAuthOptions = {}): Promise<StoredAuthSession | null> {
+  const { clearOnFailure = true } = options;
   const storedSession = await getStoredAuthSession();
   if (!storedSession) {
     return null;
@@ -20,7 +25,9 @@ export async function getValidatedAuthSession(): Promise<StoredAuthSession | nul
     await setStoredAuthSession(nextSession);
     return nextSession;
   } catch {
-    await clearStoredAuthSession();
+    if (clearOnFailure) {
+      await clearStoredAuthSession();
+    }
     return null;
   }
 }

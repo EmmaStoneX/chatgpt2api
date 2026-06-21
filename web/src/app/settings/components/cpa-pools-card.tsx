@@ -20,20 +20,20 @@ export function CPAPoolsCard() {
 
   return (
     <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
-      <CardContent className="space-y-6 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-stone-100">
+      <CardContent className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
+            <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 sm:mt-0">
               <ServerCog className="size-5 text-stone-600" />
             </div>
-            <div>
+            <div className="min-w-0 space-y-1">
               <h2 className="text-lg font-semibold tracking-tight">CPA 连接管理</h2>
-              <p className="text-sm text-stone-500">先配置连接，再按需查询远程账号并选择导入到本地号池。</p>
+              <p className="max-w-[34rem] text-sm leading-6 text-stone-500">先配置连接，再按需查询远程账号并选择导入到本地号池。</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {pools.length > 0 ? <Badge className="rounded-md px-2.5 py-1">{pools.length} 个连接</Badge> : null}
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={openAddDialog}>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            {pools.length > 0 ? <Badge>{pools.length} 个连接</Badge> : null}
+            <Button className="h-11 flex-1 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800 sm:flex-none" onClick={openAddDialog}>
               <Plus className="size-4" />
               添加连接
             </Button>
@@ -97,7 +97,8 @@ export function CPAPoolsCard() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="h-8 rounded-lg border-stone-200 bg-white px-3 text-xs text-stone-600"
+                      size="sm"
+                      className="border-stone-200 bg-white text-stone-600"
                       onClick={() => void browseFiles(pool)}
                       disabled={isBusy}
                     >

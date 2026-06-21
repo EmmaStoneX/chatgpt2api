@@ -230,13 +230,17 @@ function taskDataToStoredImage(image: StoredImage, task: ImageTask): StoredImage
   }
 
   if (task.status === "error") {
+    const errorMessage =
+      task.error?.includes("未完成的图片任务已中断")
+        ? "当前这次生图任务在服务重启时中断；已保存成功的历史图片仍可在图片管理查看。"
+        : task.error || "生成失败";
     return {
       ...image,
       taskId: task.id,
       status: "error",
       taskStatus: undefined,
       progress: undefined,
-      error: task.error || "生成失败",
+      error: errorMessage,
       durationMs: task.duration_ms,
     };
   }
@@ -440,6 +444,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
   const scrollPositionsRef = useRef<Map<string, number>>(loadScrollPositions());
   const isRestoringScrollRef = useRef(false);
   const scrollRestoreGenerationRef = useRef(0);
+  const pendingScrollToLatestRef = useRef(false);
 
   const config = useSettingsStore((state) => state.config);
   const imageTimeoutRetrySecs = Number(config?.image_timeout_retry_secs || 30);
@@ -775,6 +780,17 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
 
     const element = resultsViewportRef.current;
     if (!element) {
+      return;
+    }
+
+    if (pendingScrollToLatestRef.current) {
+      pendingScrollToLatestRef.current = false;
+      scrollPositionsRef.current.delete(selectedConversation.id);
+      element.style.visibility = "";
+      isRestoringScrollRef.current = false;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => scrollResultsToLatest("smooth"));
+      });
       return;
     }
 
@@ -1564,12 +1580,16 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
       };
 
     shouldStickToBottomRef.current = true;
+    pendingScrollToLatestRef.current = true;
     const btn = scrollToLatestBtnRef.current;
     if (btn) btn.style.display = "none";
     setSelectedConversationId(conversationId);
     clearComposerInputs();
 
     await persistConversation(baseConversation);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollResultsToLatest("smooth"));
+    });
     void runConversationQueue(conversationId);
 
     const targetStats = getImageConversationStats(baseConversation);
@@ -1584,7 +1604,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <section className="mx-auto grid h-[calc(100dvh-6.5rem)] min-h-0 w-full max-w-[1380px] grid-cols-1 gap-2 overflow-hidden px-0 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:h-[calc(100dvh-5.25rem)] sm:gap-3 sm:px-3 sm:pb-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <section className="mx-auto grid h-[calc(100dvh-3.5rem)] min-h-0 w-full max-w-[1380px] grid-cols-1 gap-2 overflow-hidden px-0 pb-0 sm:h-[calc(100dvh-5.25rem)] sm:gap-3 sm:px-3 sm:pb-0 lg:grid-cols-[240px_minmax(0,1fr)]">
         <div className="hidden h-full min-h-0 border-r border-stone-200/70 pr-3 lg:block">
           <ImageSidebar
             conversations={conversations}
@@ -1602,10 +1622,26 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
         <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
           <DialogContent className="flex h-[min(82dvh,760px)] w-[92vw] max-w-[460px] flex-col overflow-hidden rounded-[32px] border-white/80 bg-white p-0 shadow-[0_32px_110px_-38px_rgba(15,23,42,0.45)] sm:rounded-[36px]">
             <DialogHeader className="px-6 pt-7 pb-4 sm:px-8">
-              <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight">
+              <DialogTitle className="flex items-center gap-2 pr-10 text-xl font-bold tracking-tight">
                 <History className="size-5" />
                 历史记录
               </DialogTitle>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-medium text-stone-400">
+                  {conversations.length} 条记录
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full border-rose-100 bg-rose-50/70 px-3 text-xs text-rose-600 shadow-none hover:border-rose-200 hover:bg-rose-50"
+                  onClick={openClearHistoryConfirm}
+                  disabled={conversations.length === 0}
+                >
+                  <Trash2 className="size-3.5" />
+                  清空全部
+                </Button>
+              </div>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 sm:px-8">
               <ImageSidebar
@@ -1630,31 +1666,33 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
           </DialogContent>
         </Dialog>
 
-        <div className="flex min-h-0 flex-col gap-2 sm:gap-4">
-          <div className="flex items-center justify-between gap-2 px-1 lg:hidden">
-            <Button
-              variant="outline"
-              className="h-10 flex-1 rounded-2xl border-stone-200 bg-white/90 text-stone-700 shadow-sm"
-              onClick={() => setIsHistoryOpen(true)}
-            >
-              <History className="mr-2 size-4" />
-              历史记录 ({conversations.length})
-            </Button>
-            <Button
-              className="h-10 rounded-2xl bg-stone-950 text-white shadow-sm"
-              onClick={handleCreateDraft}
-            >
-              <Plus className="size-4" />
-              新建
-            </Button>
-            <Button
-              variant="outline"
-              className="h-10 rounded-2xl border-stone-200 bg-white/85 px-3 text-stone-600 shadow-sm"
-              onClick={openClearHistoryConfirm}
-              disabled={conversations.length === 0}
-            >
-              <Trash2 className="size-4" />
-            </Button>
+        <div className="flex h-full min-h-0 flex-col gap-2 sm:gap-4">
+          <div className="px-1 lg:hidden">
+            <div className="flex items-center gap-2 rounded-[22px] border border-white/80 bg-white/90 p-1.5 shadow-sm shadow-stone-200/60 backdrop-blur">
+              <button
+                type="button"
+                className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-[17px] px-2.5 text-left transition hover:bg-stone-100/80 active:bg-stone-100"
+                onClick={() => setIsHistoryOpen(true)}
+              >
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-stone-700">
+                  <History className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[11px] font-medium leading-4 text-stone-500">历史</span>
+                  <span className="block truncate text-sm font-semibold leading-5 text-stone-900">
+                    {selectedConversation ? `${selectedConversation.turns.length} 轮 · ${conversations.length} 条记录` : `${conversations.length} 条记录`}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[17px] bg-stone-950 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800 active:scale-[0.98]"
+                onClick={handleCreateDraft}
+              >
+                <Plus className="size-4" />
+                新建
+              </button>
+            </div>
           </div>
 
           <div className="relative min-h-0 flex-1">

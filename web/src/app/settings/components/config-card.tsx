@@ -91,7 +91,7 @@ export function ConfigCard() {
               value={String(config?.refresh_account_interval_minute || "")}
               onChange={(event) => setRefreshAccountIntervalMinute(event.target.value)}
               placeholder="分钟"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">单位分钟，控制账号自动刷新频率。</p>
           </div>
@@ -104,7 +104,7 @@ export function ConfigCard() {
                 setProxyTestResult(null);
               }}
               placeholder="http://127.0.0.1:7890"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs leading-5 text-stone-500">
               留空表示不使用代理。支持协议://账号:密码@主机:端口，也可直接粘贴代理商的 主机:端口:账号:密码；示例 http://user:pass@127.0.0.1:7890、127.0.0.1:7890:user:pass。账号密码含 @/: 等特殊字符时需 URL 编码。
@@ -126,7 +126,7 @@ export function ConfigCard() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                 onClick={() => void handleTestProxy()}
                 disabled={isTestingProxy}
               >
@@ -141,7 +141,7 @@ export function ConfigCard() {
               value={String(config?.base_url || "")}
               onChange={(event) => setBaseUrl(event.target.value)}
               placeholder="https://example.com"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">用于生成图片结果的访问前缀地址。</p>
           </div>
@@ -151,7 +151,7 @@ export function ConfigCard() {
               value={String(config?.image_retention_days || "")}
               onChange={(event) => setImageRetentionDays(event.target.value)}
               placeholder="30"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">自动删除多少天前的本地图片。</p>
           </div>
@@ -161,7 +161,7 @@ export function ConfigCard() {
               value={String(config?.image_poll_timeout_secs || "")}
               onChange={(event) => setImagePollTimeoutSecs(event.target.value)}
               placeholder="120"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">单位秒，等待上游图片结果的最长时间。</p>
           </div>
@@ -171,7 +171,7 @@ export function ConfigCard() {
               value={String(config?.image_account_concurrency || "")}
               onChange={(event) => setImageAccountConcurrency(event.target.value)}
               placeholder="1"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">限制每个账号同时处理的图片请求数量，默认 3。</p>
           </div>
@@ -201,7 +201,7 @@ export function ConfigCard() {
               value={String(config?.image_timeout_retry_secs || "30")}
               onChange={(event) => setImageTimeoutRetrySecs(event.target.value)}
               placeholder="30"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">单位秒，超时后点击"继续等待"额外等待的时间。</p>
           </div>
@@ -211,7 +211,7 @@ export function ConfigCard() {
               value={String(config?.image_settle_secs || "2.0")}
               onChange={(event) => setImageSettleSecs(event.target.value)}
               placeholder="2.0"
-              className="h-10 rounded-xl border-stone-200 bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-stone-200 bg-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!config?.image_settle_enabled}
             />
             <p className="text-xs text-stone-500">单位秒，找到图片后等待多久再次确认。需配合图片二次确认机制使用。</p>
@@ -286,7 +286,7 @@ export function ConfigCard() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                  className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                   onClick={() => void testImageStorage()}
                   disabled={isTestingImageStorage || !config?.image_storage?.enabled}
                 >
@@ -296,7 +296,7 @@ export function ConfigCard() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                  className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                   onClick={() => void syncImagesToWebDAV()}
                   disabled={isSyncingImageStorage || !config?.image_storage?.enabled || config?.image_storage?.mode === "local"}
                 >
@@ -329,7 +329,7 @@ export function ConfigCard() {
                   onValueChange={(value) => setImageStorageField("mode", value as ImageStorageMode)}
                   disabled={!config?.image_storage?.enabled}
                 >
-                  <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white shadow-none">
+                  <SelectTrigger className="border-stone-200 bg-white shadow-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,7 +345,7 @@ export function ConfigCard() {
                   value={String(config?.image_storage?.webdav_url || "")}
                   onChange={(event) => setImageStorageField("webdav_url", event.target.value)}
                   placeholder="https://example.com/dav"
-                  className="h-10 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                   disabled={!config?.image_storage?.enabled}
                 />
               </div>
@@ -354,7 +354,7 @@ export function ConfigCard() {
                 <Input
                   value={String(config?.image_storage?.webdav_username || "")}
                   onChange={(event) => setImageStorageField("webdav_username", event.target.value)}
-                  className="h-10 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                   disabled={!config?.image_storage?.enabled}
                 />
               </div>
@@ -364,7 +364,7 @@ export function ConfigCard() {
                   type="password"
                   value={String(config?.image_storage?.webdav_password || "")}
                   onChange={(event) => setImageStorageField("webdav_password", event.target.value)}
-                  className="h-10 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                   disabled={!config?.image_storage?.enabled}
                 />
               </div>
@@ -374,7 +374,7 @@ export function ConfigCard() {
                   value={String(config?.image_storage?.webdav_root_path || "")}
                   onChange={(event) => setImageStorageField("webdav_root_path", event.target.value)}
                   placeholder="chatgpt2api/images"
-                  className="h-10 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                   disabled={!config?.image_storage?.enabled}
                 />
               </div>
@@ -384,7 +384,7 @@ export function ConfigCard() {
                   value={String(config?.image_storage?.public_base_url || "")}
                   onChange={(event) => setImageStorageField("public_base_url", event.target.value)}
                   placeholder="https://cdn.example.com/chatgpt2api/images"
-                  className="h-10 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                   disabled={!config?.image_storage?.enabled}
                 />
                 <p className="text-xs text-stone-500">留空时返回本应用 /images/... 代理地址；填入后直接返回公开图片地址。</p>
@@ -405,15 +405,15 @@ export function ConfigCard() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">Base URL</label>
-                <Input value={String(config?.ai_review?.base_url || "")} onChange={(event) => setAIReviewField("base_url", event.target.value)} placeholder="https://api.openai.com" className="h-10 rounded-xl border-stone-200 bg-white" />
+                <Input value={String(config?.ai_review?.base_url || "")} onChange={(event) => setAIReviewField("base_url", event.target.value)} placeholder="https://api.openai.com" className="border-stone-200 bg-white" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">API Key</label>
-                <Input value={String(config?.ai_review?.api_key || "")} onChange={(event) => setAIReviewField("api_key", event.target.value)} placeholder="sk-..." className="h-10 rounded-xl border-stone-200 bg-white" />
+                <Input value={String(config?.ai_review?.api_key || "")} onChange={(event) => setAIReviewField("api_key", event.target.value)} placeholder="sk-..." className="border-stone-200 bg-white" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">Model</label>
-                <Input value={String(config?.ai_review?.model || "")} onChange={(event) => setAIReviewField("model", event.target.value)} placeholder="gpt-5.4-mini" className="h-10 rounded-xl border-stone-200 bg-white" />
+                <Input value={String(config?.ai_review?.model || "")} onChange={(event) => setAIReviewField("model", event.target.value)} placeholder="gpt-5.4-mini" className="border-stone-200 bg-white" />
               </div>
             </div>
             <div className="space-y-2">
@@ -425,7 +425,7 @@ export function ConfigCard() {
 
         <div className="flex justify-end">
           <Button
-            className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+            className="bg-stone-950 px-5 text-white hover:bg-stone-800"
             onClick={() => void saveConfig()}
             disabled={isSavingConfig}
           >

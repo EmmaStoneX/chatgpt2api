@@ -148,6 +148,30 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  .text-pretty-cjk {
+    text-wrap: pretty;
+    line-break: strict;
+  }
+
+  @supports (word-break: auto-phrase) {
+    .text-pretty-cjk {
+      word-break: auto-phrase;
+    }
+  }
+}
+
+p,
+[data-slot="dialog-description"] {
+  text-wrap: pretty;
+  line-break: strict;
+}
+
+@supports (word-break: auto-phrase) {
+  p,
+  [data-slot="dialog-description"] {
+    word-break: auto-phrase;
+  }
 }
 
 .dark .bg-white,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 from threading import Event
 
@@ -13,6 +14,13 @@ from api.support import resolve_web_asset, start_limited_account_watcher
 from services.backup_service import backup_service
 from services.config import config
 from services.image_service import start_image_cleanup_scheduler
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
 
 
 def create_app() -> FastAPI:
@@ -48,16 +56,17 @@ def create_app() -> FastAPI:
     app.include_router(register.create_router())
     app.include_router(system.create_router(app_version))
 
-    @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_web(full_path: str):
-        asset = resolve_web_asset(full_path)
-        if asset is not None:
-            return FileResponse(asset)
-        if full_path.strip("/").startswith("_next/"):
-            raise HTTPException(status_code=404, detail="Not Found")
-        fallback = resolve_web_asset("")
-        if fallback is None:
-            raise HTTPException(status_code=404, detail="Not Found")
-        return FileResponse(fallback)
+    if _env_flag("CHATGPT2API_SERVE_WEB", True):
+        @app.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+        async def serve_web(full_path: str):
+            asset = resolve_web_asset(full_path)
+            if asset is not None:
+                return FileResponse(asset)
+            if full_path.strip("/").startswith("_next/"):
+                raise HTTPException(status_code=404, detail="Not Found")
+            fallback = resolve_web_asset("")
+            if fallback is None:
+                raise HTTPException(status_code=404, detail="Not Found")
+            return FileResponse(fallback)
 
     return app

@@ -1,5 +1,8 @@
 import { httpRequest, request } from "@/lib/request";
 
+const AUTH_REQUEST_TIMEOUT_MS = 8000;
+const PAGE_DATA_TIMEOUT_MS = 12000;
+
 export type AccountType = string;
 export type AccountStatus = "正常" | "限流" | "异常" | "禁用";
 export type ImageModel = string;
@@ -372,15 +375,16 @@ export async function login(authKey: string) {
       Authorization: `Bearer ${normalizedAuthKey}`,
     },
     redirectOnUnauthorized: false,
+    timeout: AUTH_REQUEST_TIMEOUT_MS,
   });
 }
 
 export async function fetchAccounts() {
-  return httpRequest<AccountListResponse>("/api/accounts");
+  return httpRequest<AccountListResponse>("/api/accounts", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function fetchModels() {
-  return httpRequest<ModelListResponse>("/v1/models");
+  return httpRequest<ModelListResponse>("/v1/models", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function createAccounts(tokens: string[], accounts: AccountImportPayload[] = []) {
@@ -550,7 +554,7 @@ export async function fetchImageTasks(ids: string[]) {
     params.set("ids", ids.join(","));
   }
   params.set("_t", String(Date.now()));
-  return httpRequest<ImageTaskListResponse>(`/api/image-tasks?${params.toString()}`);
+  return httpRequest<ImageTaskListResponse>(`/api/image-tasks?${params.toString()}`, { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function resumeImagePoll(taskId: string, extraTimeoutSecs = 30) {
@@ -561,7 +565,7 @@ export async function resumeImagePoll(taskId: string, extraTimeoutSecs = 30) {
 }
 
 export async function fetchSettingsConfig() {
-  return httpRequest<{ config: SettingsConfig }>("/api/settings");
+  return httpRequest<{ config: SettingsConfig }>("/api/settings", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function updateSettingsConfig(settings: SettingsConfig) {
@@ -572,7 +576,7 @@ export async function updateSettingsConfig(settings: SettingsConfig) {
 }
 
 export async function fetchThirdPartyApps() {
-  return httpRequest<{ third_party_apps: ThirdPartyAppsSettings }>("/api/third-party-apps");
+  return httpRequest<{ third_party_apps: ThirdPartyAppsSettings }>("/api/third-party-apps", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function testBackupConnection() {
@@ -597,7 +601,7 @@ export async function syncImageStorage() {
 }
 
 export async function fetchBackups() {
-  return httpRequest<{ items: BackupItem[]; state: BackupState; settings: BackupSettings }>("/api/backups");
+  return httpRequest<{ items: BackupItem[]; state: BackupState; settings: BackupSettings }>("/api/backups", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function runBackupNow() {
@@ -632,6 +636,7 @@ export async function fetchManagedImages(filters: { start_date?: string; end_dat
   if (filters.end_date) params.set("end_date", filters.end_date);
   return httpRequest<{ items: ManagedImage[]; groups: Array<{ date: string; items: ManagedImage[] }> }>(
     `/api/images${params.toString() ? `?${params.toString()}` : ""}`,
+    { timeout: PAGE_DATA_TIMEOUT_MS },
   );
 }
 
@@ -666,7 +671,7 @@ export async function downloadSingleImage(path: string) {
 }
 
 export async function fetchImageTags() {
-  return httpRequest<{ tags: string[] }>("/api/images/tags");
+  return httpRequest<{ tags: string[] }>("/api/images/tags", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function setImageTags(path: string, tags: string[]) {
@@ -688,7 +693,7 @@ export type ImageStorageStats = {
 };
 
 export async function fetchImageStorage() {
-  return httpRequest<ImageStorageStats>("/api/images/storage");
+  return httpRequest<ImageStorageStats>("/api/images/storage", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function compressAllImages() {
@@ -707,7 +712,7 @@ export async function fetchSystemLogs(filters: { type?: string; start_date?: str
   if (filters.type) params.set("type", filters.type);
   if (filters.start_date) params.set("start_date", filters.start_date);
   if (filters.end_date) params.set("end_date", filters.end_date);
-  return httpRequest<{ items: SystemLog[] }>(`/api/logs${params.toString() ? `?${params.toString()}` : ""}`);
+  return httpRequest<{ items: SystemLog[] }>(`/api/logs${params.toString() ? `?${params.toString()}` : ""}`, { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function deleteSystemLogs(ids: string[]) {
@@ -718,7 +723,7 @@ export async function deleteSystemLogs(ids: string[]) {
 }
 
 export async function fetchUserKeys() {
-  return httpRequest<{ items: UserKey[] }>("/api/auth/users");
+  return httpRequest<{ items: UserKey[] }>("/api/auth/users", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function createUserKey(name: string) {
@@ -742,7 +747,7 @@ export async function deleteUserKey(keyId: string) {
 }
 
 export async function fetchRegisterConfig() {
-  return httpRequest<{ register: RegisterConfig }>("/api/register");
+  return httpRequest<{ register: RegisterConfig }>("/api/register", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function updateRegisterConfig(updates: Partial<RegisterConfig>) {
@@ -800,7 +805,7 @@ export type CPAImportJob = {
 };
 
 export async function fetchCPAPools() {
-  return httpRequest<{ pools: CPAPool[] }>("/api/cpa/pools");
+  return httpRequest<{ pools: CPAPool[] }>("/api/cpa/pools", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function createCPAPool(pool: { name: string; base_url: string; secret_key: string }) {
@@ -827,7 +832,7 @@ export async function deleteCPAPool(poolId: string) {
 }
 
 export async function fetchCPAPoolFiles(poolId: string) {
-  return httpRequest<{ pool_id: string; files: CPARemoteFile[] }>(`/api/cpa/pools/${poolId}/files`);
+  return httpRequest<{ pool_id: string; files: CPARemoteFile[] }>(`/api/cpa/pools/${poolId}/files`, { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function startCPAImport(poolId: string, names: string[]) {
@@ -838,7 +843,7 @@ export async function startCPAImport(poolId: string, names: string[]) {
 }
 
 export async function fetchCPAPoolImportJob(poolId: string) {
-  return httpRequest<{ import_job: CPAImportJob | null }>(`/api/cpa/pools/${poolId}/import`);
+  return httpRequest<{ import_job: CPAImportJob | null }>(`/api/cpa/pools/${poolId}/import`, { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 // ── Sub2API ────────────────────────────────────────────────────────
@@ -874,7 +879,7 @@ export type Sub2APIRemoteGroup = {
 };
 
 export async function fetchSub2APIServers() {
-  return httpRequest<{ servers: Sub2APIServer[] }>("/api/sub2api/servers");
+  return httpRequest<{ servers: Sub2APIServer[] }>("/api/sub2api/servers", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function createSub2APIServer(server: {
@@ -911,6 +916,7 @@ export async function updateSub2APIServer(
 export async function fetchSub2APIServerGroups(serverId: string) {
   return httpRequest<{ server_id: string; groups: Sub2APIRemoteGroup[] }>(
     `/api/sub2api/servers/${serverId}/groups`,
+    { timeout: PAGE_DATA_TIMEOUT_MS },
   );
 }
 
@@ -923,6 +929,7 @@ export async function deleteSub2APIServer(serverId: string) {
 export async function fetchSub2APIServerAccounts(serverId: string) {
   return httpRequest<{ server_id: string; accounts: Sub2APIRemoteAccount[] }>(
     `/api/sub2api/servers/${serverId}/accounts`,
+    { timeout: PAGE_DATA_TIMEOUT_MS },
   );
 }
 
@@ -934,7 +941,7 @@ export async function startSub2APIImport(serverId: string, accountIds: string[])
 }
 
 export async function fetchSub2APIImportJob(serverId: string) {
-  return httpRequest<{ import_job: CPAImportJob | null }>(`/api/sub2api/servers/${serverId}/import`);
+  return httpRequest<{ import_job: CPAImportJob | null }>(`/api/sub2api/servers/${serverId}/import`, { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 // ── Upstream proxy ────────────────────────────────────────────────
@@ -964,7 +971,7 @@ export type ClearanceTestResult = {
 };
 
 export async function fetchProxy() {
-  return httpRequest<{ proxy: ProxySettings }>("/api/proxy");
+  return httpRequest<{ proxy: ProxySettings }>("/api/proxy", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function updateProxy(updates: { enabled?: boolean; url?: string }) {
@@ -982,7 +989,7 @@ export async function testProxy(url?: string) {
 }
 
 export async function fetchProxyRuntime() {
-  return httpRequest<ProxyRuntimeResponse>("/api/proxy/runtime");
+  return httpRequest<ProxyRuntimeResponse>("/api/proxy/runtime", { timeout: PAGE_DATA_TIMEOUT_MS });
 }
 
 export async function updateProxyRuntime(runtime: ProxyRuntimeSettings) {

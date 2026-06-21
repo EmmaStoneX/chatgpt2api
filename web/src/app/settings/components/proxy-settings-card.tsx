@@ -59,7 +59,7 @@ export function ProxySettingsCard() {
               <p className="text-sm text-stone-500">为系统中的出站请求配置统一代理，保存后会立即生效。</p>
             </div>
           </div>
-          <Badge variant={proxy.trim() ? "success" : "secondary"} className="w-fit rounded-md px-2.5 py-1">
+          <Badge variant={proxy.trim() ? "success" : "secondary"} className="w-fit">
             {proxy.trim() ? "已配置" : "未配置"}
           </Badge>
         </div>
@@ -79,7 +79,7 @@ export function ProxySettingsCard() {
                   setTestResult(null);
                 }}
                 placeholder="http://user:pass@127.0.0.1:7890"
-                className="h-11 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
               />
               <p className="text-sm text-stone-500">
                 留空表示不使用代理。请按完整地址填写，例如 `http://127.0.0.1:7890`、`http://用户名:密码@127.0.0.1:7890` 或 `socks5://127.0.0.1:7890`。
@@ -103,7 +103,7 @@ export function ProxySettingsCard() {
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-stone-200 bg-white px-5 text-stone-700"
+                className="border-stone-200 bg-white px-5 text-stone-700"
                 onClick={() => void handleTest()}
                 disabled={isTesting || isLoadingConfig}
               >
@@ -111,7 +111,7 @@ export function ProxySettingsCard() {
                 测试代理
               </Button>
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="bg-stone-950 px-5 text-white hover:bg-stone-800"
                 onClick={() => void saveConfig()}
                 disabled={isSavingConfig}
               >

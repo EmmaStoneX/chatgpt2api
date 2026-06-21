@@ -7,11 +7,27 @@ from services.openai_backend_api import OpenAIBackendAPI
 from utils.helper import CODEX_IMAGE_MODEL
 
 
+def _model_item(model_id: str) -> dict[str, Any]:
+    return {
+        "id": model_id,
+        "object": "model",
+        "created": 0,
+        "owned_by": "chatgpt2api",
+        "permission": [],
+        "root": model_id,
+        "parent": None,
+    }
+
+
 def list_models() -> dict[str, Any]:
-    result = OpenAIBackendAPI().list_models()
+    try:
+        result = OpenAIBackendAPI().list_models()
+    except Exception:
+        result = {"object": "list", "data": [_model_item("gpt-image-2")]}
     data = result.get("data")
     if not isinstance(data, list):
-        return result
+        data = [_model_item("gpt-image-2")]
+        result = {"object": "list", "data": data}
     seen = {str(item.get("id") or "").strip() for item in data if isinstance(item, dict)}
     dynamic_models: set[str] = set()
     accounts = account_service.list_accounts()
@@ -41,13 +57,5 @@ def list_models() -> dict[str, Any]:
 
     for model in sorted(dynamic_models):
         if model not in seen:
-            data.append({
-                "id": model,
-                "object": "model",
-                "created": 0,
-                "owned_by": "chatgpt2api",
-                "permission": [],
-                "root": model,
-                "parent": None,
-            })
+            data.append(_model_item(model))
     return result

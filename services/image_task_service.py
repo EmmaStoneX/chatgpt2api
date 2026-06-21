@@ -10,6 +10,7 @@ from typing import Any
 
 from services.config import DATA_DIR, config
 from services.content_filter import request_text
+from services.image_storage_service import image_storage_service
 from services.log_service import LOG_TYPE_CALL, log_service
 from services.protocol import openai_v1_image_edit, openai_v1_image_generations
 
@@ -218,9 +219,11 @@ class ImageTaskService:
                 "owner_id": owner,
                 "status": TASK_STATUS_QUEUED,
                 "mode": mode,
+                "prompt": _clean(payload.get("prompt")),
                 "model": _clean(payload.get("model"), "gpt-image-2"),
                 "size": _clean(payload.get("size")),
                 "quality": _clean(payload.get("quality"), "auto"),
+                "base_url": _clean(payload.get("base_url")),
                 "created_at": now,
                 "updated_at": now,
                 "created_ts": time.time(),
@@ -255,7 +258,14 @@ class ImageTaskService:
                 self._update_task(key, started_ts=time.time())
             self._update_task(key, progress=step)
         # 将进度回调添加到 payload 中（handler 会提取并传递给 ConversationRequest）
-        payload_with_progress = {**payload, "progress_callback": progress_callback}
+        payload_with_progress = {
+            **payload,
+            "progress_callback": progress_callback,
+            "task_context": {
+                "task_id": key.split(":", 1)[1],
+                "owner_id": _owner_id(identity),
+            },
+        }
         try:
             handler = self.edit_handler if mode == "edit" else self.generation_handler
             result = handler(payload_with_progress)
@@ -382,9 +392,11 @@ class ImageTaskService:
                 "owner_id": owner,
                 "status": status,
                 "mode": "edit" if item.get("mode") == "edit" else "generate",
+                "prompt": _clean(item.get("prompt")),
                 "model": _clean(item.get("model"), "gpt-image-2"),
                 "size": _clean(item.get("size")),
                 "quality": _clean(item.get("quality"), "auto"),
+                "base_url": _clean(item.get("base_url")),
                 "created_at": _clean(item.get("created_at"), _now_iso()),
                 "updated_at": _clean(item.get("updated_at"), _clean(item.get("created_at"), _now_iso())),
                 "created_ts": item.get("created_ts"),
@@ -414,11 +426,38 @@ class ImageTaskService:
         changed = False
         for task in self._tasks.values():
             if task.get("status") in UNFINISHED_STATUSES:
-                task["status"] = TASK_STATUS_ERROR
-                task["error"] = "服务已重启，未完成的图片任务已中断"
+                data = task.get("data")
+                if not isinstance(data, list) or not data:
+                    data = self._recovered_task_data(task)
+                if isinstance(data, list) and data:
+                    task["status"] = TASK_STATUS_SUCCESS
+                    task["data"] = data
+                    task["error"] = ""
+                    task["progress"] = "recovered_from_storage"
+                else:
+                    task["status"] = TASK_STATUS_ERROR
+                    task["error"] = "服务已重启，未完成的图片任务已中断"
                 task["updated_at"] = _now_iso()
                 changed = True
         return changed
+
+    def _recovered_task_data(self, task: dict[str, Any]) -> list[dict[str, Any]]:
+        images = image_storage_service.list_task_items(
+            _clean(task.get("owner_id")),
+            _clean(task.get("id")),
+            _clean(task.get("base_url")),
+        )
+        prompt = _clean(task.get("prompt"))
+        data: list[dict[str, Any]] = []
+        for image in images:
+            url = _clean(image.get("url"))
+            if not url:
+                continue
+            item: dict[str, Any] = {"url": url}
+            if prompt:
+                item["revised_prompt"] = prompt
+            data.append(item)
+        return data
 
     def _cleanup_locked(self) -> bool:
         try:
@@ -517,6 +556,10 @@ class ImageTaskService:
                 "b64_json",
                 "",
                 int(time.time()),
+                metadata={
+                    "task_id": _clean(key.split(":", 1)[1] if ":" in key else key),
+                    "owner_id": _clean(key.split(":", 1)[0] if ":" in key else ""),
+                },
             )["data"]
             self._update_task(key, status=TASK_STATUS_SUCCESS, data=data, error="", duration_ms=int((time.time() - started) * 1000))
             self._log_call(

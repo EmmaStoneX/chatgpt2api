@@ -202,7 +202,7 @@ class ImageStorageService:
         relative_dir = Path(time.strftime("%Y"), time.strftime("%m"), time.strftime("%d"))
         return f"{relative_dir.as_posix()}/{filename}"
 
-    def save(self, image_data: bytes, base_url: str | None = None) -> StoredImage:
+    def save(self, image_data: bytes, base_url: str | None = None, metadata: dict[str, object] | None = None) -> StoredImage:
         config.cleanup_old_images()
         rel = self.make_relative_path(image_data)
         mode = self.mode()
@@ -235,6 +235,12 @@ class ImageStorageService:
             "webdav": stored_webdav,
             "remote_url": remote_url,
         }
+        if metadata:
+            item["metadata"] = {
+                str(key): str(value)
+                for key, value in metadata.items()
+                if str(key).strip() and str(value).strip()
+            }
         if dimensions:
             item["width"], item["height"] = dimensions
         with self._index_lock:
@@ -334,6 +340,28 @@ class ImageStorageService:
                 self._save_index(indexed)
         items.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
         return items
+
+    def list_task_items(self, owner_id: str, task_id: str, base_url: str = "") -> list[dict[str, object]]:
+        owner = _clean(owner_id)
+        task = _clean(task_id)
+        if not owner or not task:
+            return []
+        matched: list[dict[str, object]] = []
+        with self._index_lock:
+            for rel, item in self._load_clean_index().items():
+                metadata = item.get("metadata")
+                if not isinstance(metadata, dict):
+                    continue
+                if _clean(metadata.get("owner_id")) != owner or _clean(metadata.get("task_id")) != task:
+                    continue
+                matched.append({
+                    **item,
+                    "rel": rel,
+                    "path": rel,
+                    "url": self._public_url(rel, base_url),
+                })
+        matched.sort(key=lambda item: str(item.get("created_at") or ""))
+        return matched
 
     def delete(self, rel: str) -> bool:
         safe_rel = _safe_relative_path(rel)

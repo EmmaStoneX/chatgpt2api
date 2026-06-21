@@ -58,7 +58,7 @@ export function ThirdPartyAppsCard() {
               value={canvas.url}
               onChange={(event) => setInfiniteCanvasField("url", event.target.value)}
               placeholder="https://canvas.best"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
             <p className="text-xs leading-5 text-stone-500">
               顶部入口跳转时会追加 apiKey 和 baseUrl 参数；关闭后顶部导航不显示无限画布。
@@ -70,7 +70,7 @@ export function ThirdPartyAppsCard() {
         </div>
 
         <div className="flex justify-end">
-          <Button className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800" onClick={() => void saveConfig()} disabled={isSavingConfig}>
+          <Button className="bg-stone-950 px-5 text-white hover:bg-stone-800" onClick={() => void saveConfig()} disabled={isSavingConfig}>
             {isSavingConfig ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
             保存
           </Button>

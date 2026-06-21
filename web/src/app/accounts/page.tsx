@@ -745,27 +745,31 @@ function AccountsPageContent() {
           <h1 className="text-2xl font-semibold tracking-tight">号池管理</h1>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-4 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-stone-200 bg-white/80 px-4 text-stone-700 hover:bg-white"
+            className="min-w-0 border-stone-200 bg-white/80 px-2 text-stone-700 hover:bg-white sm:px-4"
             onClick={() => void loadAccounts()}
             disabled={isLoading || isRefreshing || isDeleting}
+            title="重新加载本地账号列表"
           >
             <RefreshCw className={cn("size-4", isLoading ? "animate-spin" : "")} />
             刷新
           </Button>
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-stone-200 bg-white/80 px-4 text-stone-700 hover:bg-white"
+            className="min-w-0 border-stone-200 bg-white/80 px-2 text-stone-700 hover:bg-white sm:px-4"
             onClick={() => void handleRefreshAccounts(accounts.map((item) => item.access_token))}
             disabled={isLoading || isRefreshing || isDeleting || accounts.length === 0}
+            title="更新全部账号信息和额度"
           >
             <RefreshCw className={cn("size-4", isRefreshing ? "animate-spin" : "")} />
-            一键刷新所有账号信息和额度
+            <span className="sm:hidden">更新</span>
+            <span className="hidden sm:inline">更新额度</span>
           </Button>
           <AccountImportDialog
             disabled={isLoading || isRefreshing || isDeleting}
+            triggerClassName="min-w-0 px-2 sm:px-4"
             onImported={(items) => {
               setAccounts(items);
               setSelectedIds([]);
@@ -774,12 +778,14 @@ function AccountsPageContent() {
           />
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-stone-200 bg-white/80 px-4 text-stone-700 hover:bg-white"
+            className="min-w-0 border-stone-200 bg-white/80 px-2 text-stone-700 hover:bg-white sm:px-4"
             onClick={() => downloadTokens(accounts)}
             disabled={accounts.length === 0}
+            title="导出全部 Token"
           >
             <Download className="size-4" />
-            导出全部 Token
+            <span className="sm:hidden">导出</span>
+            <span className="hidden sm:inline">导出全部 Token</span>
           </Button>
         </div>
       </section>
@@ -819,7 +825,7 @@ function AccountsPageContent() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-stone-700">状态</label>
               <Select value={editStatus} onValueChange={(value) => setEditStatus(value as AccountStatus)}>
-                <SelectTrigger className="h-11 rounded-xl border-stone-200 bg-white">
+                <SelectTrigger className="border-stone-200 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -840,11 +846,11 @@ function AccountsPageContent() {
                   value={editProxy}
                   onChange={(event) => setEditProxy(event.target.value)}
                   placeholder="留空走全局代理，例如 http://127.0.0.1:7890"
-                  className="h-11 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                 />
                 <Button
                   variant="outline"
-                  className="h-11 rounded-xl border-stone-200 bg-white px-4 text-stone-700 sm:w-24"
+                  className="border-stone-200 bg-white px-4 text-stone-700 sm:w-24"
                   onClick={() => void handleTestAccountProxy()}
                   disabled={isTestingProxy}
                 >
@@ -857,14 +863,14 @@ function AccountsPageContent() {
           <DialogFooter className="pt-2">
             <Button
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => setEditingAccount(null)}
               disabled={isUpdating}
             >
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="bg-stone-950 px-5 text-white hover:bg-stone-800"
               onClick={() => void handleUpdateAccount()}
               disabled={isUpdating}
             >
@@ -939,7 +945,7 @@ function AccountsPageContent() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold tracking-tight">账户列表</h2>
-            <Badge variant="secondary" className="rounded-lg bg-stone-200 px-2 py-0.5 text-stone-700">
+            <Badge variant="secondary" className="bg-stone-200 text-stone-700">
               {filteredAccounts.length}
             </Badge>
           </div>
@@ -954,7 +960,7 @@ function AccountsPageContent() {
                   setPage(1);
                 }}
                 placeholder="搜索邮箱"
-                className="h-10 rounded-xl border-stone-200 bg-white/85 pl-10"
+                className="border-stone-200 bg-white/85 pl-10"
               />
             </div>
             <Select
@@ -964,7 +970,7 @@ function AccountsPageContent() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="h-10 w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
+              <SelectTrigger className="w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -982,7 +988,7 @@ function AccountsPageContent() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="h-10 w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
+              <SelectTrigger className="w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1021,7 +1027,8 @@ function AccountsPageContent() {
               <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-stone-500 hover:bg-stone-100"
+                  size="sm"
+                  className="text-stone-500 hover:bg-stone-100"
                   onClick={() => void handleRefreshAccounts(selectedTokens)}
                   disabled={selectedTokens.length === 0 || isRefreshing}
                 >
@@ -1030,7 +1037,8 @@ function AccountsPageContent() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                  size="sm"
+                  className="text-amber-600 hover:bg-amber-50 hover:text-amber-700"
                   onClick={() => void handleReLogin(selectedTokens)}
                   disabled={selectedTokens.length === 0 || isRelogining}
                   title="尝试密码登录恢复账号"
@@ -1040,7 +1048,8 @@ function AccountsPageContent() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                  size="sm"
+                  className="text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                   onClick={() => void handleDeleteTokens(abnormalTokens)}
                   disabled={abnormalTokens.length === 0 || isDeleting}
                 >
@@ -1049,7 +1058,8 @@ function AccountsPageContent() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                  size="sm"
+                  className="text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                   onClick={() => void handleDeleteTokens(selectedTokens)}
                   disabled={selectedTokens.length === 0 || isDeleting}
                 >
@@ -1077,7 +1087,7 @@ function AccountsPageContent() {
                     <th className="w-56 px-4 py-3">token</th>
                     <th className="w-28 px-4 py-3">类型</th>
                     <th className="w-24 px-4 py-3">来源</th>
-                    <th className="w-24 px-4 py-3">状态</th>
+                    <th className="w-28 px-4 py-3">状态</th>
                     <th className="w-56 px-4 py-3">账号信息</th>
                     <th className="w-32 px-4 py-3">创建时间</th>
                     <th className="w-24 px-4 py-3">额度</th>
@@ -1128,19 +1138,19 @@ function AccountsPageContent() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary" className="rounded-md bg-stone-100 text-stone-700">
+                          <Badge variant="secondary" className="bg-stone-100 text-stone-700">
                             {displayAccountType(account)}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className="rounded-md border-stone-200 text-stone-600">
+                          <Badge variant="outline" className="border-stone-200 text-stone-600">
                             {displayAccountSource(account)}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Badge
                             variant={status.badge}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1"
+                            className="min-w-[4.75rem] shrink-0 gap-1.5 whitespace-nowrap px-3"
                           >
                             <StatusIcon className="size-3.5" />
                             {account.status}
@@ -1161,7 +1171,7 @@ function AccountsPageContent() {
                           })()}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="info" className="rounded-md">
+                          <Badge variant="info">
                             {formatQuota(account)}
                           </Badge>
                         </td>
@@ -1264,7 +1274,7 @@ function AccountsPageContent() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className="h-10 w-[108px] shrink-0 rounded-lg border-stone-200 bg-white text-sm leading-none">
+                  <SelectTrigger className="w-[108px] shrink-0 rounded-lg border-stone-200 bg-white text-sm leading-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

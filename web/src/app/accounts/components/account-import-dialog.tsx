@@ -42,6 +42,7 @@ type ImportMethod = "menu" | "token" | "session" | "codex-auth" | "cpa" | "oauth
 
 type AccountImportDialogProps = {
   disabled?: boolean;
+  triggerClassName?: string;
   onImported: (items: Account[]) => void;
 };
 
@@ -155,7 +156,7 @@ function MethodCard({
   );
 }
 
-export function AccountImportDialog({ disabled, onImported }: AccountImportDialogProps) {
+export function AccountImportDialog({ disabled, triggerClassName, onImported }: AccountImportDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<ImportMethod>("menu");
@@ -169,6 +170,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
   const [oauthSession, setOauthSession] = useState<OAuthLoginStartResponse | null>(null);
   const [oauthCallbackInput, setOauthCallbackInput] = useState("");
   const [oauthStarting, setOauthStarting] = useState(false);
+  const submitButtonClass = "h-10 min-w-[7.5rem] rounded-xl bg-stone-950 px-6 text-white hover:bg-stone-800";
 
   const txtInputRef = useRef<HTMLInputElement | null>(null);
   const cpaInputRef = useRef<HTMLInputElement | null>(null);
@@ -743,12 +745,18 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
   };
 
   const footerDisabled = disabled || isSubmitting;
+  const renderSubmitContent = (label: string) => (
+    <>
+      {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+      <span>{isSubmitting ? "导入中" : label}</span>
+    </>
+  );
 
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <Button
-          className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+          className={cn("h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800", triggerClassName)}
           onClick={() => setOpen(true)}
           disabled={disabled}
         >
@@ -803,51 +811,47 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             </Button>
             {method === "token" ? (
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className={submitButtonClass}
                 onClick={() => void handleImportTokenText()}
                 disabled={footerDisabled}
               >
-                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                导入 Token
+                {renderSubmitContent("导入 Token")}
               </Button>
             ) : null}
             {method === "session" ? (
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className={submitButtonClass}
                 onClick={() => void handleImportSessionJson()}
                 disabled={footerDisabled}
               >
-                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                导入 JSON
+                {renderSubmitContent("导入 JSON")}
               </Button>
             ) : null}
             {method === "codex-auth" ? (
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className={submitButtonClass}
                 onClick={() => void handleImportCodexAuthJson()}
                 disabled={footerDisabled}
               >
-                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                导入 JSON
+                {renderSubmitContent("导入 JSON")}
               </Button>
             ) : null}
             {method === "oauth" ? (
               <Button
                 className={cn(
-                  "h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800",
+                  submitButtonClass,
                   !oauthSession ? "hidden" : "",
                 )}
                 onClick={() => void handleFinishOAuth()}
                 disabled={footerDisabled || !oauthSession || !oauthCallbackInput.trim()}
               >
-                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                完成导入
+                {renderSubmitContent("完成导入")}
               </Button>
             ) : null}
             {method === "cpa" ? (
               <Button
                 className={cn(
-                  "h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800",
+                  submitButtonClass,
                   !pendingCpaImport ? "hidden" : "",
                 )}
                 onClick={() => setConfirmOpen(true)}
@@ -883,7 +887,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               返回
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className={submitButtonClass}
               onClick={() =>
                 void submitTokens(
                   pendingCpaImport?.tokens ?? [],
@@ -893,8 +897,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               }
               disabled={isSubmitting || !pendingCpaImport}
             >
-              {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              确认导入
+              {renderSubmitContent("确认导入")}
             </Button>
           </DialogFooter>
         </DialogContent>

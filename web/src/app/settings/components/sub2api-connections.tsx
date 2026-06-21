@@ -383,23 +383,23 @@ export function Sub2APIConnections() {
   return (
     <>
       <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
-        <CardContent className="space-y-6 p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-stone-100">
+        <CardContent className="space-y-6 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3 sm:items-center">
+              <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 sm:mt-0">
                 <ServerCog className="size-5 text-stone-600" />
               </div>
-              <div>
+              <div className="min-w-0 space-y-1">
                 <h2 className="text-lg font-semibold tracking-tight">Sub2API 连接管理</h2>
-                <p className="text-sm text-stone-500">
+                <p className="max-w-[34rem] text-sm leading-6 text-stone-500">
                   配置 Sub2API 服务器后，可查询其中的 OpenAI OAuth 账号并批量导入本地号池。
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {servers.length > 0 ? <Badge className="rounded-md px-2.5 py-1">{servers.length} 个连接</Badge> : null}
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              {servers.length > 0 ? <Badge>{servers.length} 个连接</Badge> : null}
               <Button
-                className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+                className="h-11 flex-1 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800 sm:flex-none"
                 onClick={openAddDialog}
               >
                 <Plus className="size-4" />
@@ -468,7 +468,8 @@ export function Sub2APIConnections() {
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
-                        className="h-8 rounded-lg border-stone-200 bg-white px-3 text-xs text-stone-600"
+                        size="sm"
+                        className="border-stone-200 bg-white text-stone-600"
                         onClick={() => void handleBrowseAccounts(server)}
                         disabled={isBusy}
                       >
@@ -563,7 +564,7 @@ export function Sub2APIConnections() {
                 value={formName}
                 onChange={(event) => setFormName(event.target.value)}
                 placeholder="例如：自建 sub2api"
-                className="h-11 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -575,13 +576,13 @@ export function Sub2APIConnections() {
                 value={formBaseUrl}
                 onChange={(event) => setFormBaseUrl(event.target.value)}
                 placeholder="http://your-sub2api-host:8080"
-                className="h-11 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-stone-700">认证方式</label>
               <Select value={authMode} onValueChange={(value) => setAuthMode(value as AuthMode)}>
-                <SelectTrigger className="h-11 rounded-xl border-stone-200 bg-white">
+                <SelectTrigger className="border-stone-200 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -601,7 +602,7 @@ export function Sub2APIConnections() {
                     value={formEmail}
                     onChange={(event) => setFormEmail(event.target.value)}
                     placeholder="admin@example.com"
-                    className="h-11 rounded-xl border-stone-200 bg-white"
+                    className="border-stone-200 bg-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -615,7 +616,7 @@ export function Sub2APIConnections() {
                       value={formPassword}
                       onChange={(event) => setFormPassword(event.target.value)}
                       placeholder={editingServer ? "留空则不修改密码" : "管理员密码"}
-                      className="h-11 rounded-xl border-stone-200 bg-white pr-10"
+                      className="border-stone-200 bg-white pr-10"
                     />
                     <button
                       type="button"
@@ -639,7 +640,7 @@ export function Sub2APIConnections() {
                     value={formApiKey}
                     onChange={(event) => setFormApiKey(event.target.value)}
                     placeholder={editingServer ? "留空则不修改密钥" : "Sub2API Admin API Key"}
-                    className="h-11 rounded-xl border-stone-200 bg-white pr-10"
+                    className="border-stone-200 bg-white pr-10"
                   />
                   <button
                     type="button"
@@ -658,7 +659,7 @@ export function Sub2APIConnections() {
               </label>
               {remoteGroups && remoteGroups.length > 0 ? (
                 <Select value={formGroupId || "__all__"} onValueChange={(value) => setFormGroupId(value === "__all__" ? "" : value)}>
-                  <SelectTrigger className="h-11 rounded-xl border-stone-200 bg-white">
+                  <SelectTrigger className="border-stone-200 bg-white">
                     <SelectValue placeholder="选择分组" />
                   </SelectTrigger>
                   <SelectContent>
@@ -680,7 +681,7 @@ export function Sub2APIConnections() {
                   value={formGroupId}
                   onChange={(event) => setFormGroupId(event.target.value)}
                   placeholder="留空则同步所有分组；或填写分组 ID / ungrouped"
-                  className="h-11 rounded-xl border-stone-200 bg-white"
+                  className="border-stone-200 bg-white"
                 />
               )}
               {editingServer ? (
@@ -688,7 +689,8 @@ export function Sub2APIConnections() {
                   <span>同步时会用分组 ID 过滤，留空 = 同步所有 OpenAI OAuth 账号。</span>
                   <Button
                     variant="outline"
-                    className="h-8 rounded-lg border-stone-200 bg-white px-2 text-xs text-stone-600"
+                    size="sm"
+                    className="border-stone-200 bg-white text-stone-600"
                     onClick={() => void handleFetchGroups()}
                     disabled={isLoadingGroups}
                   >
@@ -710,14 +712,14 @@ export function Sub2APIConnections() {
           <DialogFooter className="pt-2">
             <Button
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => setDialogOpen(false)}
               disabled={isSaving}
             >
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="bg-stone-950 px-5 text-white hover:bg-stone-800"
               onClick={() => void handleSave()}
               disabled={isSaving}
             >
@@ -747,10 +749,10 @@ export function Sub2APIConnections() {
                   setAccountPage(1);
                 }}
                 placeholder="搜索邮箱、套餐或名称"
-                className="h-10 rounded-xl border-stone-200 bg-white pl-10"
+                className="border-stone-200 bg-white pl-10"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
               <Select
                 value={pageSize}
                 onValueChange={(value) => {
@@ -758,7 +760,7 @@ export function Sub2APIConnections() {
                   setAccountPage(1);
                 }}
               >
-                <SelectTrigger className="h-10 w-[120px] rounded-xl border-stone-200 bg-white">
+                <SelectTrigger className="w-full border-stone-200 bg-white sm:w-[120px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -771,7 +773,7 @@ export function Sub2APIConnections() {
               </Select>
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                className="flex-1 border-stone-200 bg-white px-4 text-stone-700 sm:flex-none"
                 onClick={() => handleToggleSelectAllFiltered(!allFilteredSelected)}
               >
                 {allFilteredSelected ? "取消全选" : "全选筛选结果"}
@@ -810,12 +812,11 @@ export function Sub2APIConnections() {
                             {item.email || item.name || item.id}
                           </span>
                           {item.plan_type ? (
-                            <Badge className="rounded-md bg-stone-100 text-stone-600">{item.plan_type}</Badge>
+                            <Badge className="bg-stone-100 text-stone-600">{item.plan_type}</Badge>
                           ) : null}
                           {item.status ? (
                             <Badge
                               variant={item.status === "active" ? "success" : "info"}
-                              className="rounded-md"
                             >
                               {item.status}
                             </Badge>
@@ -841,7 +842,7 @@ export function Sub2APIConnections() {
             <div className="flex items-center gap-2 overflow-x-auto">
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-stone-200 bg-white px-3"
+                className="rounded-xl border-stone-200 bg-white px-3"
                 onClick={() => setAccountPage((prev) => Math.max(1, prev - 1))}
                 disabled={safeAccountPage <= 1}
               >
@@ -852,7 +853,7 @@ export function Sub2APIConnections() {
               </span>
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-stone-200 bg-white px-3"
+                className="rounded-xl border-stone-200 bg-white px-3"
                 onClick={() => setAccountPage((prev) => Math.min(accountPageCount, prev + 1))}
                 disabled={safeAccountPage >= accountPageCount}
               >
@@ -864,14 +865,14 @@ export function Sub2APIConnections() {
           <DialogFooter className="pt-2">
             <Button
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => setBrowserOpen(false)}
               disabled={isStartingImport}
             >
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="bg-stone-950 px-5 text-white hover:bg-stone-800"
               onClick={() => void handleStartImport()}
               disabled={isStartingImport || selectedIds.length === 0}
             >

@@ -138,7 +138,7 @@ export function ProxyRuntimeCard() {
               onValueChange={(value) => setProxyRuntimeField("egress_mode", value as ProxyRuntimeEgressMode)}
               disabled={!runtimeEnabled}
             >
-              <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white shadow-none">
+              <SelectTrigger className="border-stone-200 bg-white shadow-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +155,7 @@ export function ProxyRuntimeCard() {
               value={runtime.proxy_url}
               onChange={(event) => setProxyRuntimeField("proxy_url", event.target.value)}
               placeholder="http://privoxy:8118"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
               disabled={!runtimeEnabled || runtime.egress_mode !== "single_proxy"}
             />
             <p className="text-xs leading-5 text-stone-500">
@@ -169,7 +169,7 @@ export function ProxyRuntimeCard() {
               value={runtime.resource_proxy_url}
               onChange={(event) => setProxyRuntimeField("resource_proxy_url", event.target.value)}
               placeholder="留空则复用清障代理"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
               disabled={!runtimeEnabled || runtime.egress_mode !== "single_proxy"}
             />
           </div>
@@ -180,7 +180,7 @@ export function ProxyRuntimeCard() {
               value={runtime.reset_session_status_codes.join(",")}
               onChange={(event) => setProxyRuntimeStatusCodesText(event.target.value)}
               placeholder="403"
-              className="h-10 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
               disabled={!runtimeEnabled}
             />
             <p className="text-xs text-stone-500">默认 403，只对 Cloudflare/挑战类错误触发。</p>
@@ -199,7 +199,7 @@ export function ProxyRuntimeCard() {
             <Button
               type="button"
               variant="outline"
-              className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+              className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
               onClick={() => void handleTestRuntimeProxy()}
               disabled={isTestingProxy || !runtimeEnabled}
             >
@@ -240,7 +240,7 @@ export function ProxyRuntimeCard() {
                 }}
                 disabled={!runtimeEnabled}
               >
-                <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white shadow-none">
+                <SelectTrigger className="border-stone-200 bg-white shadow-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -257,7 +257,7 @@ export function ProxyRuntimeCard() {
                 value={clearance.flaresolverr_url}
                 onChange={(event) => setProxyRuntimeClearanceField("flaresolverr_url", event.target.value)}
                 placeholder="http://flaresolverr:8191"
-                className="h-10 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
                 disabled={!runtimeEnabled || clearanceMode !== "flaresolverr"}
               />
             </div>
@@ -267,7 +267,7 @@ export function ProxyRuntimeCard() {
               <Input
                 value={clearance.user_agent}
                 onChange={(event) => setProxyRuntimeClearanceField("user_agent", event.target.value)}
-                className="h-10 rounded-xl border-stone-200 bg-white font-mono text-xs"
+                className="border-stone-200 bg-white font-mono text-xs"
                 disabled={!runtimeEnabled || clearanceMode === "none"}
               />
             </div>
@@ -278,7 +278,7 @@ export function ProxyRuntimeCard() {
                 value={String(clearance.timeout_sec)}
                 onChange={(event) => setProxyRuntimeClearanceField("timeout_sec", event.target.value)}
                 placeholder="60"
-                className="h-10 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
                 disabled={!runtimeEnabled || clearanceMode === "none"}
               />
             </div>
@@ -289,7 +289,7 @@ export function ProxyRuntimeCard() {
                 value={String(clearance.refresh_interval)}
                 onChange={(event) => setProxyRuntimeClearanceField("refresh_interval", event.target.value)}
                 placeholder="3600"
-                className="h-10 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
                 disabled={!runtimeEnabled || clearanceMode === "none"}
               />
             </div>
@@ -314,7 +314,7 @@ export function ProxyRuntimeCard() {
                 value={clearance.cf_clearance}
                 onChange={(event) => setProxyRuntimeClearanceField("cf_clearance", event.target.value)}
                 placeholder="可选：只填写 cf_clearance 值"
-                className="h-10 rounded-xl border-stone-200 bg-white font-mono text-xs"
+                className="border-stone-200 bg-white font-mono text-xs"
                 disabled={!runtimeEnabled || clearanceMode !== "manual"}
               />
             </div>
@@ -334,7 +334,7 @@ export function ProxyRuntimeCard() {
                 value={targetUrl}
                 onChange={(event) => setTargetUrl(event.target.value)}
                 placeholder="https://chatgpt.com"
-                className="h-10 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
                 disabled={!runtimeEnabled || clearanceMode === "none"}
               />
             </div>
@@ -343,7 +343,7 @@ export function ProxyRuntimeCard() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                 onClick={() => void handleTestClearance()}
                 disabled={isTestingClearance || !runtimeEnabled || clearanceMode === "none"}
               >
@@ -365,7 +365,7 @@ export function ProxyRuntimeCard() {
         <div className="flex justify-end">
           <Button
             type="button"
-            className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+            className="bg-stone-950 px-5 text-white hover:bg-stone-800"
             onClick={() => void saveConfig()}
             disabled={isSavingConfig}
           >

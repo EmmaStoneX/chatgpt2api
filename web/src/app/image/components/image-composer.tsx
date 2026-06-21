@@ -6,6 +6,7 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import type { ImageModel } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -111,6 +112,7 @@ export function ImageComposer({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSizeMenuOpen, setIsSizeMenuOpen] = useState(false);
+  const [isMobileSizeMenu, setIsMobileSizeMenu] = useState(false);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [sizeMenuPos, setSizeMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const sizeMenuRef = useRef<HTMLDivElement>(null);
@@ -126,11 +128,12 @@ export function ImageComposer({
   const qualityLabel = qualityOptions.find((option) => option.value === imageQuality)?.label || "自动";
   const ratioLabel = imageRatio === "auto" ? "auto" : `${imageRatio}(${imageTier})`;
   const imageSizeLabel = `${qualityLabel} · ${ratioLabel} · ${imageCount || 1} 张`;
+  const mobileImageSizeLabel = `${qualityLabel} · ${ratioLabel.replace("(1k)", "")} · ${imageCount || 1}张`;
   const selectedModelLabel = modelOptions.find((option) => option.value === imageModel)?.label || imageModel;
   const isCodexModel = imageModel.toLowerCase().includes("codex");
 
   useEffect(() => {
-    if (!isSizeMenuOpen) {
+    if (!isSizeMenuOpen || isMobileSizeMenu) {
       return;
     }
     const handlePointerDown = (event: MouseEvent) => {
@@ -149,7 +152,23 @@ export function ImageComposer({
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isSizeMenuOpen]);
+  }, [isMobileSizeMenu, isSizeMenuOpen]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 640px)");
+    const handleBreakpointChange = () => {
+      if (mediaQuery.matches) {
+        setIsMobileSizeMenu(false);
+      } else {
+        setIsSizeMenuOpen(false);
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleBreakpointChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleBreakpointChange);
+    };
+  }, []);
 
   const handleTextareaPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
     const imageFiles = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
@@ -205,8 +224,176 @@ export function ImageComposer({
     void onReferenceImageChange(imageFiles);
   };
 
+  const renderSizeMenuContent = (showTitle = true) => (
+    <>
+      {showTitle ? <h3 className="mb-3 text-base font-semibold text-stone-950">图像设置</h3> : null}
+      <div className="mb-3">
+        <div className="mb-2 text-sm font-medium text-stone-900">模型</div>
+        <Select
+          value={imageModel}
+          onValueChange={(value) => {
+            onImageModelChange(value as ImageModel);
+          }}
+        >
+          <SelectTrigger className="border-stone-200 bg-white text-sm shadow-none">
+            <div className="flex min-w-0 items-center gap-2">
+              <img
+                src="/openai.svg"
+                alt=""
+                aria-hidden="true"
+                className="size-4 shrink-0 text-stone-700"
+              />
+              <span className="truncate">{selectedModelLabel}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent className="z-[120]">
+            {modelOptions.map((option) => (
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                className="pl-10"
+                style={{
+                  backgroundImage: "url('/openai.svg')",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "12px center",
+                  backgroundSize: "16px 16px",
+                }}
+              >
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mb-3">
+        <div className="mb-2 text-sm font-medium text-stone-900">质量</div>
+        <div className="grid grid-cols-4 gap-2">
+          {qualityOptions.map((option) => {
+            const active = option.value === imageQuality;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={cn(
+                  "h-10 cursor-pointer rounded-full border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
+                  active && "border-stone-950 bg-white font-medium text-stone-950",
+                )}
+                onClick={() => onImageQualityChange(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mb-3">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-stone-900">
+          尺寸 <Info className="size-3.5 text-stone-400" />
+        </div>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div className="flex items-center rounded-lg bg-stone-100 px-3 py-1.5 text-sm text-stone-700">
+            <span className="mr-2 text-stone-500">W</span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              value={imageWidth}
+              onChange={(event) => onImageWidthChange(event.target.value)}
+              className="h-7 border-0 bg-transparent px-0 text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
+            />
+          </div>
+          <span className="text-stone-400">×</span>
+          <div className="flex items-center rounded-lg bg-stone-100 px-3 py-1.5 text-sm text-stone-700">
+            <span className="mr-2 text-stone-500">H</span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              value={imageHeight}
+              onChange={(event) => onImageHeightChange(event.target.value)}
+              className="h-7 border-0 bg-transparent px-0 text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="mb-3">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-stone-900">
+          宽高比 <Info className="size-3.5 text-stone-400" />
+        </div>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+          {aspectOptions.map((option) => {
+            const active = option.ratio === imageRatio && option.tier === imageTier && option.width === imageWidth && option.height === imageHeight;
+            const Icon = option.icon;
+            const disabled = !isCodexModel && (option.tier === "2k" || option.tier === "4k");
+            return (
+              <button
+                key={`${option.ratio}-${option.tier}-${option.label}`}
+                type="button"
+                disabled={disabled}
+                className={cn(
+                  "flex h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
+                  active && "border-stone-950",
+                  disabled && "cursor-not-allowed border-stone-100 bg-stone-50 text-stone-300 hover:border-stone-100 hover:bg-stone-50",
+                )}
+                onClick={() => {
+                  if (disabled) {
+                    return;
+                  }
+                  onImageRatioChange(option.ratio);
+                  onImageTierChange(option.tier);
+                  onImageWidthChange(option.width);
+                  onImageHeightChange(option.height);
+                }}
+              >
+                {Icon ? (
+                  <>
+                    <Icon className="size-3.5 stroke-[1.8]" />
+                    <span>{option.label}</span>
+                  </>
+                ) : (
+                  <span>{option.label}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="border-t border-stone-100 pt-3">
+        <div className="mb-2 text-sm font-medium text-stone-900">生成数量</div>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+          {countOptions.map((option) => {
+            const active = imageCount === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                className={cn(
+                  "h-10 cursor-pointer rounded-full border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
+                  active && "border-stone-950 bg-white font-medium text-stone-950",
+                )}
+                onClick={() => onImageCountChange(option)}
+              >
+                {option} 张
+              </button>
+            );
+          })}
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="1"
+            max="100"
+            step="1"
+            value={imageCount}
+            onChange={(event) => onImageCountChange(event.target.value)}
+            className="rounded-full border-stone-200 bg-white px-3 text-center text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
+          />
+        </div>
+      </div>
+    </>
+  );
+
   return (
-    <div className="shrink-0 flex justify-center px-1 sm:px-0">
+    <div className="mt-auto flex shrink-0 justify-center px-1 sm:px-0">
       <div style={{ width: "min(980px, 100%)" }}>
         <input
           ref={fileInputRef}
@@ -304,34 +491,40 @@ export function ImageComposer({
               </div>
             ) : null}
 
-            <div className="rounded-b-[24px] border-t border-stone-100 bg-white px-3 pb-3 pt-2 dark:border-white/10 dark:bg-stone-950/95 sm:absolute sm:inset-x-0 sm:bottom-0 sm:rounded-b-none sm:border-t-0 sm:bg-gradient-to-t sm:from-white sm:via-white/95 sm:to-transparent sm:px-6 sm:pb-4 sm:pt-6 sm:dark:from-stone-950 sm:dark:via-stone-950/95 sm:dark:to-stone-950/0" onClick={(event) => event.stopPropagation()}>
-              <div className="flex items-end justify-between gap-2 sm:gap-3">
-                <div className="hide-scrollbar flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
+            <div className="rounded-b-[24px] border-t border-stone-100 bg-white px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 dark:border-white/10 dark:bg-stone-950/95 sm:absolute sm:inset-x-0 sm:bottom-0 sm:rounded-b-none sm:border-t-0 sm:bg-gradient-to-t sm:from-white sm:via-white/95 sm:to-transparent sm:px-6 sm:pb-4 sm:pt-6 sm:dark:from-stone-950 sm:dark:via-stone-950/95 sm:dark:to-stone-950/0" onClick={(event) => event.stopPropagation()}>
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <div className="hide-scrollbar flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:gap-3 sm:overflow-visible sm:pb-0">
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 shrink-0 rounded-full border-stone-200 bg-white px-3 text-xs font-medium text-stone-700 shadow-none sm:h-10 sm:px-4 sm:text-sm"
+                    className="shrink-0 rounded-full border-stone-200 bg-white px-3 text-sm font-medium text-stone-700 shadow-none sm:px-4"
                     onClick={onPickReferenceImage}
                     aria-label={referenceImages.length > 0 ? "添加参考图" : "上传"}
                   >
-                    <ImagePlus className="size-3.5 sm:size-4" />
+                    <ImagePlus className="size-4" />
                     <span className="hidden sm:inline">{referenceImages.length > 0 ? "添加参考图" : "上传"}</span>
                   </Button>
-                  <div className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-[10px] font-medium text-stone-600 sm:px-3 sm:py-2 sm:text-xs">
+                  <div className="inline-flex h-10 shrink-0 items-center rounded-full bg-stone-100 px-3 text-sm font-medium leading-none text-stone-600 sm:px-4">
                     <span className="hidden sm:inline">剩余额度 </span>{availableQuota}
                   </div>
                   {activeTaskCount > 0 && (
-                    <div className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs">
-                      <LoaderCircle className="size-3 animate-spin" />
+                    <div className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-sm font-medium leading-none text-amber-700 sm:px-4">
+                      <LoaderCircle className="size-4 animate-spin" />
                       {activeTaskCount}<span className="hidden sm:inline"> 个任务处理中</span>
                     </div>
                   )}
-                  <div className="relative flex h-9 min-w-0 shrink items-center rounded-full bg-transparent text-[11px] sm:h-auto sm:shrink-0 sm:text-[13px]">
+                  <div className="relative flex h-10 min-w-0 shrink items-center rounded-full bg-transparent text-sm sm:shrink-0">
                     <button
                       ref={sizeMenuBtnRef}
                       type="button"
-                      className="inline-flex h-9 w-fit max-w-[calc(100vw-12rem)] items-center justify-between gap-2 rounded-full bg-stone-100 px-4 text-left text-xs font-semibold text-stone-900 sm:h-10 sm:max-w-none sm:text-sm"
+                      className="inline-flex h-10 w-fit max-w-[calc(100vw-14.75rem)] items-center justify-between gap-2 rounded-full bg-stone-100 px-3 text-left text-sm font-semibold leading-none text-stone-900 sm:max-w-none sm:px-4"
                       onClick={() => {
+                        const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+                        if (isMobileViewport) {
+                          setIsMobileSizeMenu(true);
+                          setIsSizeMenuOpen(false);
+                          return;
+                        }
                         if (!isSizeMenuOpen && sizeMenuBtnRef.current) {
                           const rect = sizeMenuBtnRef.current.getBoundingClientRect();
                           const menuWidth = Math.min(460, window.innerWidth - 32);
@@ -340,13 +533,14 @@ export function ImageComposer({
                         setIsSizeMenuOpen((open) => !open);
                       }}
                     >
-                      <span className="truncate">{imageSizeLabel}</span>
-                      <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition", isSizeMenuOpen && "rotate-180")} />
+                      <span className="hidden truncate sm:inline">{imageSizeLabel}</span>
+                      <span className="truncate sm:hidden">{mobileImageSizeLabel}</span>
+                      <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition", (isSizeMenuOpen || isMobileSizeMenu) && "rotate-180")} />
                     </button>
                     {isSizeMenuOpen ? (
                       <div
                         ref={sizeMenuRef}
-                        className="fixed z-[80] max-h-[62dvh] overflow-y-auto rounded-[24px] border border-stone-200/70 bg-white p-4 shadow-[0_30px_90px_-34px_rgba(15,23,42,0.42)] sm:max-h-none sm:overflow-visible"
+                        className="fixed z-[80] hidden max-h-[62dvh] overflow-y-auto rounded-[24px] border border-stone-200/70 bg-white p-4 shadow-[0_30px_90px_-34px_rgba(15,23,42,0.42)] sm:block"
                         style={{
                           top: sizeMenuPos.top,
                           left: sizeMenuPos.left,
@@ -354,171 +548,22 @@ export function ImageComposer({
                           width: "min(460px, calc(100vw - 2rem))",
                         }}
                       >
-                        <h3 className="mb-3 text-base font-semibold text-stone-950">图像设置</h3>
-                        <div className="mb-3">
-                          <div className="mb-2 text-sm font-medium text-stone-900">模型</div>
-                          <Select
-                            value={imageModel}
-                            onValueChange={(value) => {
-                              onImageModelChange(value as ImageModel);
-                            }}
-                          >
-                            <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white text-sm shadow-none">
-                              <div className="flex min-w-0 items-center gap-2">
-                                <img
-                                  src="/openai.svg"
-                                  alt=""
-                                  aria-hidden="true"
-                                  className="size-4 shrink-0 text-stone-700"
-                                />
-                                <span className="truncate">{selectedModelLabel}</span>
-                              </div>
-                            </SelectTrigger>
-                            <SelectContent className="z-[120]">
-                              {modelOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                  className="pl-10"
-                                  style={{
-                                    backgroundImage: "url('/openai.svg')",
-                                    backgroundRepeat: "no-repeat",
-                                    backgroundPosition: "12px center",
-                                    backgroundSize: "16px 16px",
-                                  }}
-                                >
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="mb-3">
-                          <div className="mb-2 text-sm font-medium text-stone-900">质量</div>
-                          <div className="grid grid-cols-4 gap-2">
-                            {qualityOptions.map((option) => {
-                              const active = option.value === imageQuality;
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  className={cn(
-                                    "h-9 cursor-pointer rounded-full border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
-                                    active && "border-stone-950 bg-white font-medium text-stone-950",
-                                  )}
-                                  onClick={() => onImageQualityChange(option.value)}
-                                >
-                                  {option.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="mb-3">
-                          <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-stone-900">
-                            尺寸 <Info className="size-3.5 text-stone-400" />
-                          </div>
-                          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                            <div className="flex items-center rounded-lg bg-stone-100 px-3 py-1.5 text-sm text-stone-700">
-                              <span className="mr-2 text-stone-500">W</span>
-                              <Input
-                                type="number"
-                                inputMode="numeric"
-                                min="1"
-                                value={imageWidth}
-                                onChange={(event) => onImageWidthChange(event.target.value)}
-                                className="h-7 border-0 bg-transparent px-0 text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
-                              />
-                            </div>
-                            <span className="text-stone-400">×</span>
-                            <div className="flex items-center rounded-lg bg-stone-100 px-3 py-1.5 text-sm text-stone-700">
-                              <span className="mr-2 text-stone-500">H</span>
-                              <Input
-                                type="number"
-                                inputMode="numeric"
-                                min="1"
-                                value={imageHeight}
-                                onChange={(event) => onImageHeightChange(event.target.value)}
-                                className="h-7 border-0 bg-transparent px-0 text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mb-3">
-                          <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-stone-900">
-                            宽高比 <Info className="size-3.5 text-stone-400" />
-                          </div>
-                          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                            {aspectOptions.map((option) => {
-                              const active = option.ratio === imageRatio && option.tier === imageTier && option.width === imageWidth && option.height === imageHeight;
-                              const Icon = option.icon;
-                              const disabled = !isCodexModel && (option.tier === "2k" || option.tier === "4k");
-                              return (
-                                <button
-                                  key={`${option.ratio}-${option.tier}-${option.label}`}
-                                  type="button"
-                                  disabled={disabled}
-                                  className={cn(
-                                    "flex h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
-                                    active && "border-stone-950",
-                                    disabled && "cursor-not-allowed border-stone-100 bg-stone-50 text-stone-300 hover:border-stone-100 hover:bg-stone-50",
-                                  )}
-                                  onClick={() => {
-                                    if (disabled) {
-                                      return;
-                                    }
-                                    onImageRatioChange(option.ratio);
-                                    onImageTierChange(option.tier);
-                                    onImageWidthChange(option.width);
-                                    onImageHeightChange(option.height);
-                                  }}
-                                >
-                                  {Icon ? (
-                                    <>
-                                      <Icon className="size-3.5 stroke-[1.8]" />
-                                      <span>{option.label}</span>
-                                    </>
-                                  ) : (
-                                    <span>{option.label}</span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="border-t border-stone-100 pt-3">
-                          <div className="mb-2 text-sm font-medium text-stone-900">生成数量</div>
-                          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                            {countOptions.map((option) => {
-                              const active = imageCount === option;
-                              return (
-                                <button
-                                  key={option}
-                                  type="button"
-                                  className={cn(
-                                    "h-9 cursor-pointer rounded-full border border-stone-200 bg-white text-sm text-stone-800 transition hover:border-stone-300 hover:bg-stone-50",
-                                    active && "border-stone-950 bg-white font-medium text-stone-950",
-                                  )}
-                                  onClick={() => onImageCountChange(option)}
-                                >
-                                  {option} 张
-                                </button>
-                              );
-                            })}
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              min="1"
-                              max="100"
-                              step="1"
-                              value={imageCount}
-                              onChange={(event) => onImageCountChange(event.target.value)}
-                              className="h-9 rounded-full border-stone-200 bg-white px-3 text-center text-sm font-medium text-stone-800 shadow-none focus-visible:ring-0"
-                            />
-                          </div>
-                        </div>
+                        {renderSizeMenuContent()}
                       </div>
                     ) : null}
+                    <Sheet open={isMobileSizeMenu} onOpenChange={setIsMobileSizeMenu}>
+                      <SheetContent
+                        side="bottom"
+                        className="max-h-[85dvh] gap-0 overflow-hidden rounded-t-[28px] border-stone-200 bg-white p-0 sm:hidden"
+                      >
+                        <SheetHeader className="border-b border-stone-100 px-5 py-4 text-left">
+                          <SheetTitle className="text-base font-semibold text-stone-950">图像设置</SheetTitle>
+                        </SheetHeader>
+                        <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+                          {renderSizeMenuContent(false)}
+                        </div>
+                      </SheetContent>
+                    </Sheet>
                   </div>
 
                 </div>
@@ -527,10 +572,10 @@ export function ImageComposer({
                   type="button"
                   onClick={() => void onSubmit()}
                   disabled={!prompt.trim()}
-                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-stone-950 text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300 sm:size-11"
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-stone-950 text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
                   aria-label={referenceImages.length > 0 ? "编辑图片" : "生成图片"}
                 >
-                  <ArrowUp className="size-3.5 sm:size-4" />
+                  <ArrowUp className="size-4" />
                 </button>
               </div>
             </div>

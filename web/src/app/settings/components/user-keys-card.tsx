@@ -185,7 +185,7 @@ export function UserKeysCard() {
                 <p className="text-sm text-stone-500">为普通用户创建专用密钥；普通用户只能进入画图页，不能查看设置和号池。</p>
               </div>
             </div>
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => setIsDialogOpen(true)}>
+            <Button className="rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => setIsDialogOpen(true)}>
               <Plus className="size-4" />
               创建用户密钥
             </Button>
@@ -199,7 +199,7 @@ export function UserKeysCard() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 rounded-xl border-emerald-200 bg-white px-4 text-emerald-700"
+                  className="rounded-xl border-emerald-200 bg-white px-4 text-emerald-700"
                   onClick={() => void handleCopy(revealedKey)}
                 >
                   <Copy className="size-4" />
@@ -226,7 +226,7 @@ export function UserKeysCard() {
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="truncate text-sm font-medium text-stone-800">{item.name}</div>
-                        <Badge variant={item.enabled ? "success" : "secondary"} className="rounded-md">
+                        <Badge variant={item.enabled ? "success" : "secondary"}>
                           {item.enabled ? "已启用" : "已禁用"}
                         </Badge>
                       </div>
@@ -240,7 +240,7 @@ export function UserKeysCard() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                        className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                         onClick={() => openEditDialog(item)}
                         disabled={isPending}
                       >
@@ -250,7 +250,7 @@ export function UserKeysCard() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                        className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                         onClick={() => void handleToggle(item)}
                         disabled={isPending}
                       >
@@ -266,7 +266,7 @@ export function UserKeysCard() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-rose-200 bg-white px-4 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        className="rounded-xl border-rose-200 bg-white px-4 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                         onClick={() => setDeletingItem(item)}
                         disabled={isPending}
                       >
@@ -296,14 +296,14 @@ export function UserKeysCard() {
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="例如：设计同学 A、运营临时账号"
-              className="h-11 rounded-xl border-stone-200 bg-white"
+              className="border-stone-200 bg-white"
             />
           </div>
           <DialogFooter>
             <Button
               type="button"
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => setIsDialogOpen(false)}
               disabled={isCreating}
             >
@@ -311,7 +311,7 @@ export function UserKeysCard() {
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="bg-stone-950 px-5 text-white hover:bg-stone-800"
               onClick={() => void handleCreate()}
               disabled={isCreating}
             >
@@ -334,7 +334,7 @@ export function UserKeysCard() {
             <Button
               type="button"
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => setDeletingItem(null)}
               disabled={deletingItem ? pendingIds.has(deletingItem.id) : false}
             >
@@ -342,7 +342,7 @@ export function UserKeysCard() {
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl bg-rose-600 px-5 text-white hover:bg-rose-700"
+              className="bg-rose-600 px-5 text-white hover:bg-rose-700"
               onClick={() => void handleDelete()}
               disabled={deletingItem ? pendingIds.has(deletingItem.id) : false}
             >
@@ -376,7 +376,7 @@ export function UserKeysCard() {
                 value={editName}
                 onChange={(event) => setEditName(event.target.value)}
                 placeholder="例如：设计同学 A、运营临时账号"
-                className="h-11 rounded-xl border-stone-200 bg-white"
+                className="border-stone-200 bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -385,7 +385,7 @@ export function UserKeysCard() {
                 value={editKey}
                 onChange={(event) => setEditKey(event.target.value)}
                 placeholder="例如：sk-your-custom-user-key"
-                className="h-11 rounded-xl border-stone-200 bg-white font-mono"
+                className="border-stone-200 bg-white font-mono"
               />
               <p className="text-xs leading-5 text-stone-500">
                 保存后旧密钥会立即失效，新密钥生效。系统仍只保存哈希，不会回显当前密钥。
@@ -396,7 +396,7 @@ export function UserKeysCard() {
             <Button
               type="button"
               variant="secondary"
-              className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+              className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
               onClick={() => {
                 setEditingItem(null);
                 setEditKey("");
@@ -407,7 +407,7 @@ export function UserKeysCard() {
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="bg-stone-950 px-5 text-white hover:bg-stone-800"
               onClick={() => void handleEdit()}
               disabled={editingItem ? pendingIds.has(editingItem.id) : false}
             >

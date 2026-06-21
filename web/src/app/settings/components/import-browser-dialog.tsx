@@ -77,12 +77,12 @@ export function ImportBrowserDialog() {
               value={fileQuery}
               onChange={(event) => setFileQuery(event.target.value)}
               placeholder="搜索 email 或文件名"
-              className="h-10 rounded-xl border-stone-200 bg-white pl-10"
+              className="border-stone-200 bg-white pl-10"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
             <Select value={pageSize} onValueChange={(value) => setPageSize(value as (typeof PAGE_SIZE_OPTIONS)[number])}>
-              <SelectTrigger className="h-10 w-[120px] rounded-xl border-stone-200 bg-white">
+              <SelectTrigger className="w-full border-stone-200 bg-white sm:w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -95,7 +95,7 @@ export function ImportBrowserDialog() {
             </Select>
             <Button
               variant="outline"
-              className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+              className="flex-1 border-stone-200 bg-white px-4 text-stone-700 sm:flex-none"
               onClick={() => toggleSelectAllFiltered(!allFilteredSelected)}
             >
               {allFilteredSelected ? "取消全选" : "全选筛选结果"}
@@ -141,7 +141,7 @@ export function ImportBrowserDialog() {
           <div className="flex items-center gap-2 overflow-x-auto">
             <Button
               variant="outline"
-              className="h-9 rounded-xl border-stone-200 bg-white px-3"
+              className="rounded-xl border-stone-200 bg-white px-3"
               onClick={() => setFilePage(Math.max(1, safeFilePage - 1))}
               disabled={safeFilePage <= 1}
             >
@@ -152,7 +152,7 @@ export function ImportBrowserDialog() {
             </span>
             <Button
               variant="outline"
-              className="h-9 rounded-xl border-stone-200 bg-white px-3"
+              className="rounded-xl border-stone-200 bg-white px-3"
               onClick={() => setFilePage(Math.min(filePageCount, safeFilePage + 1))}
               disabled={safeFilePage >= filePageCount}
             >
@@ -164,14 +164,14 @@ export function ImportBrowserDialog() {
         <DialogFooter className="pt-2">
           <Button
             variant="secondary"
-            className="h-10 rounded-xl bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
+            className="bg-stone-100 px-5 text-stone-700 hover:bg-stone-200"
             onClick={() => setBrowserOpen(false)}
             disabled={isStartingImport}
           >
             取消
           </Button>
           <Button
-            className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+            className="bg-stone-950 px-5 text-white hover:bg-stone-800"
             onClick={() => void startImport()}
             disabled={isStartingImport || selectedNames.length === 0}
           >

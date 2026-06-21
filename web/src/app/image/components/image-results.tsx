@@ -31,6 +31,27 @@ type ImageResultsProps = {
 // Blob URL 缓存：避免 base64 超长字符串在 DOM 中，改用短小的 blob: URL
 const b64BlobUrlCache = new Map<string, string>();
 
+function normalizeStoredImageUrl(url: string) {
+  const value = String(url || "").trim();
+  if (!value || typeof window === "undefined") {
+    return value;
+  }
+  try {
+    const parsed = new URL(value, window.location.origin);
+    const sameHost = parsed.hostname === window.location.hostname;
+    const missingPort = !parsed.port && Boolean(window.location.port);
+    if (sameHost && missingPort && parsed.pathname.startsWith("/images/")) {
+      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    if (sameHost && missingPort && parsed.pathname.startsWith("/image-thumbnails/")) {
+      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch {
+    return value;
+  }
+  return value;
+}
+
 function getStoredImageSrc(image: StoredImage) {
   if (image.b64_json) {
     let url = b64BlobUrlCache.get(image.b64_json);
@@ -44,7 +65,7 @@ function getStoredImageSrc(image: StoredImage) {
     }
     return url;
   }
-  return image.url || "";
+  return normalizeStoredImageUrl(image.url || "");
 }
 
 async function downloadStoredImage(image: StoredImage, index: number) {
@@ -57,7 +78,8 @@ async function downloadStoredImage(image: StoredImage, index: number) {
       blob = new Blob([bytes], { type: "image/png" });
     } else if (image.url) {
       // 确保 URL 是绝对路径
-      const url = image.url.startsWith("http") ? image.url : `${window.location.origin}${image.url}`;
+      const normalizedUrl = normalizeStoredImageUrl(image.url);
+      const url = normalizedUrl.startsWith("http") ? normalizedUrl : `${window.location.origin}${normalizedUrl}`;
       const res = await fetch(url);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -282,21 +304,21 @@ export function ImageResults({
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-7 w-7 rounded-full border-stone-200 bg-white px-0 text-[10px] text-stone-700 hover:bg-stone-50 sm:h-8 sm:w-fit sm:px-3 sm:text-xs"
+                                  className="w-8 rounded-full border-stone-200 bg-white px-0 text-stone-700 hover:bg-stone-50 sm:w-fit sm:px-3"
                                   onClick={() => onContinueEdit(selectedConversation.id, image)}
                                   aria-label="加入编辑"
                                 >
-                                  <Sparkles className="size-3 sm:size-4" />
+                                  <Sparkles className="size-4" />
                                   <span className="hidden sm:inline">加入编辑</span>
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-7 w-7 rounded-full border-stone-200 bg-white px-0 text-[10px] text-stone-700 hover:bg-stone-50 sm:h-8 sm:w-fit sm:px-3 sm:text-xs"
+                                  className="w-8 rounded-full border-stone-200 bg-white px-0 text-stone-700 hover:bg-stone-50 sm:w-fit sm:px-3"
                                   onClick={() => void downloadStoredImage(image, index)}
                                   aria-label="下载"
                                 >
-                                  <Download className="size-3 sm:size-4" />
+                                  <Download className="size-4" />
                                   <span className="hidden sm:inline">下载</span>
                                 </Button>
                               </div>

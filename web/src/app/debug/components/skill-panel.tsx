@@ -142,7 +142,7 @@ ${skillEn}
   return (
     <section className="grid items-stretch gap-4 lg:grid-cols-2">
       {versions.map((item) => (
-        <div key={item.title} className="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+        <div key={item.title} className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div>
               <h2 className="font-medium text-slate-900 dark:text-slate-100">{item.title}</h2>

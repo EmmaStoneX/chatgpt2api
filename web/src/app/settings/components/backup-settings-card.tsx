@@ -178,7 +178,7 @@ export function BackupSettingsCard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={backupState?.running ? "warning" : backupState?.last_status === "success" ? "success" : "secondary"} className="rounded-md">
+              <Badge variant={backupState?.running ? "warning" : backupState?.last_status === "success" ? "success" : "secondary"}>
                 {backupState?.running ? "备份中" : backupState?.last_status === "success" ? "最近成功" : backupState?.last_status === "error" ? "最近失败" : "未执行"}
               </Badge>
             </div>
@@ -206,41 +206,41 @@ export function BackupSettingsCard() {
 
           <div className="space-y-2">
             <label className="text-sm text-stone-700">Cloudflare Account ID</label>
-            <Input value={String(backup.account_id || "")} onChange={(event) => setBackupField("account_id", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.account_id || "")} onChange={(event) => setBackupField("account_id", event.target.value)} className="border-stone-200 bg-white" />
           </div>
           <div className="space-y-2">
             <label className="text-sm text-stone-700">Bucket 名称</label>
-            <Input value={String(backup.bucket || "")} onChange={(event) => setBackupField("bucket", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.bucket || "")} onChange={(event) => setBackupField("bucket", event.target.value)} className="border-stone-200 bg-white" />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm text-stone-700">Access Key ID</label>
-            <Input value={String(backup.access_key_id || "")} onChange={(event) => setBackupField("access_key_id", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.access_key_id || "")} onChange={(event) => setBackupField("access_key_id", event.target.value)} className="border-stone-200 bg-white" />
           </div>
           <div className="space-y-2">
             <label className="text-sm text-stone-700">Secret Access Key</label>
-            <Input type="password" value={String(backup.secret_access_key || "")} onChange={(event) => setBackupField("secret_access_key", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input type="password" value={String(backup.secret_access_key || "")} onChange={(event) => setBackupField("secret_access_key", event.target.value)} className="border-stone-200 bg-white" />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm text-stone-700">备份前缀</label>
-            <Input value={String(backup.prefix || "")} onChange={(event) => setBackupField("prefix", event.target.value)} placeholder="backups" className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.prefix || "")} onChange={(event) => setBackupField("prefix", event.target.value)} placeholder="backups" className="border-stone-200 bg-white" />
             <p className="text-xs text-stone-500">R2 内对象前缀，例如 `backups/prod`。</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm text-stone-700">定时备份间隔</label>
-            <Input value={String(backup.interval_minutes || "")} onChange={(event) => setBackupField("interval_minutes", event.target.value)} placeholder="360" className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.interval_minutes || "")} onChange={(event) => setBackupField("interval_minutes", event.target.value)} placeholder="360" className="border-stone-200 bg-white" />
             <p className="text-xs text-stone-500">单位分钟，服务启动后会按此间隔自动轮询执行。</p>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm text-stone-700">保留备份数量</label>
-            <Input value={String(backup.rotation_keep || "")} onChange={(event) => setBackupField("rotation_keep", event.target.value)} placeholder="10" className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input value={String(backup.rotation_keep || "")} onChange={(event) => setBackupField("rotation_keep", event.target.value)} placeholder="10" className="border-stone-200 bg-white" />
             <p className="text-xs text-stone-500">成功上传后自动删除更旧的备份。填 `0` 表示不自动轮替。</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm text-stone-700">加密口令</label>
-            <Input type="password" value={String(backup.passphrase || "")} onChange={(event) => setBackupField("passphrase", event.target.value)} placeholder={backup.encrypt ? "启用加密后必填" : "留空"} className="h-10 rounded-xl border-stone-200 bg-white" />
+            <Input type="password" value={String(backup.passphrase || "")} onChange={(event) => setBackupField("passphrase", event.target.value)} placeholder={backup.encrypt ? "启用加密后必填" : "留空"} className="border-stone-200 bg-white" />
             <p className="text-xs text-stone-500">仅在启用加密时使用。请妥善保管，否则无法解密备份内容。</p>
           </div>
           </div>
@@ -285,19 +285,19 @@ export function BackupSettingsCard() {
           </div>
 
           <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void testBackup()} disabled={isTestingBackup}>
+          <Button type="button" variant="outline" className="rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void testBackup()} disabled={isTestingBackup}>
             {isTestingBackup ? <LoaderCircle className="size-4 animate-spin" /> : <Shield className="size-4" />}
             测试连接
           </Button>
-          <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void loadBackups()} disabled={isLoadingBackups}>
+          <Button type="button" variant="outline" className="rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void loadBackups()} disabled={isLoadingBackups}>
             {isLoadingBackups ? <LoaderCircle className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}
             刷新列表
           </Button>
-          <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void runBackup()} disabled={isRunningBackup || Boolean(backupState?.running)}>
+          <Button type="button" variant="outline" className="rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void runBackup()} disabled={isRunningBackup || Boolean(backupState?.running)}>
             {isRunningBackup || backupState?.running ? <LoaderCircle className="size-4 animate-spin" /> : <Play className="size-4" />}
             立即备份
           </Button>
-          <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => void saveConfig()} disabled={isSavingConfig}>
+          <Button className="rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => void saveConfig()} disabled={isSavingConfig}>
             {isSavingConfig ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
             保存配置
           </Button>
@@ -328,7 +328,7 @@ export function BackupSettingsCard() {
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="break-all text-sm font-medium text-stone-800">{item.name}</div>
-                        {item.encrypted ? <Badge variant="secondary" className="rounded-md">已加密</Badge> : null}
+                        {item.encrypted ? <Badge variant="secondary">已加密</Badge> : null}
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
                         <span>大小 {formatBytes(item.size)}</span>
@@ -341,20 +341,20 @@ export function BackupSettingsCard() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+                        className="rounded-xl border-stone-200 bg-white px-4 text-stone-700"
                         onClick={() => void handleDownload(item.key, item.name)}
                       >
                         <Download className="size-4" />
                         下载
                       </Button>
-                      <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void handleOpenDetail(item.key)}>
+                      <Button type="button" variant="outline" className="rounded-xl border-stone-200 bg-white px-4 text-stone-700" onClick={() => void handleOpenDetail(item.key)}>
                         <Eye className="size-4" />
                         查看详情
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-rose-200 bg-white px-4 text-rose-700"
+                        className="rounded-xl border-rose-200 bg-white px-4 text-rose-700"
                         onClick={() => void removeBackup(item.key)}
                         disabled={isDeleting}
                       >

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -11,9 +11,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import webConfig from "@/constants/common-env";
 import { fetchThirdPartyApps, type ThirdPartyAppsSettings } from "@/lib/api";
-import { getValidatedAuthSession } from "@/lib/auth-session";
+import { useAuth } from "@/lib/auth-provider";
 import { cn } from "@/lib/utils";
-import { clearStoredAuthSession, type StoredAuthSession } from "@/store/auth";
 
 const adminNavItems = [
   { href: "/image", label: "生图" },
@@ -21,7 +20,7 @@ const adminNavItems = [
   { href: "/register", label: "注册机" },
   { href: "/image-manager", label: "图片管理" },
   { href: "/logs", label: "日志管理" },
-  { href: "/debug", label: "调试" },
+  { href: "/debug", label: "实验室" },
   { href: "/settings", label: "设置" },
 ];
 
@@ -42,34 +41,9 @@ function buildThirdPartyHref(appUrl: string, baseUrl: string, apiKey: string) {
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [session, setSession] = useState<StoredAuthSession | null | undefined>(undefined);
+  const { session, isCheckingAuth, logout } = useAuth();
   const [thirdPartyApps, setThirdPartyApps] = useState<ThirdPartyAppsSettings | null>(null);
   const [isCanvasDialogOpen, setIsCanvasDialogOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      if (pathname === "/login") {
-        if (!active) {
-          return;
-        }
-        setSession(null);
-        return;
-      }
-
-      const storedSession = await getValidatedAuthSession();
-      if (!active) {
-        return;
-      }
-      setSession(storedSession);
-    };
-
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
 
   useEffect(() => {
     if (!session) {
@@ -100,11 +74,11 @@ export function TopNav() {
   }, [session]);
 
   const handleLogout = async () => {
-    await clearStoredAuthSession();
+    await logout();
     router.replace("/login");
   };
 
-  if (pathname === "/login" || session === undefined || !session) {
+  if (pathname === "/login" || isCheckingAuth || !session) {
     return null;
   }
 

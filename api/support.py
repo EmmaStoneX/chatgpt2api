@@ -47,7 +47,13 @@ def require_admin(authorization: str | None) -> dict[str, object]:
 
 
 def resolve_image_base_url(request: Request) -> str:
-    return config.base_url or f"{request.url.scheme}://{request.headers.get('host', request.url.netloc)}"
+    forwarded_proto = str(request.headers.get("x-forwarded-proto") or request.url.scheme).split(",", 1)[0].strip()
+    forwarded_host = str(
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.netloc
+    ).split(",", 1)[0].strip()
+    return config.base_url or f"{forwarded_proto}://{forwarded_host}"
 
 
 def raise_image_quota_error(exc: Exception) -> None:
@@ -119,11 +125,20 @@ def resolve_web_asset(requested_path: str) -> Path | None:
         return None
     clean_path = requested_path.strip("/")
     base_dir = WEB_DIST_DIR.resolve()
-    candidates = [base_dir / "index.html"] if not clean_path else [
-        base_dir / Path(clean_path),
-        base_dir / clean_path / "index.html",
-        base_dir / f"{clean_path}.html",
-    ]
+    if not clean_path:
+        candidates = [base_dir / "index.html"]
+    else:
+        candidates = [
+            base_dir / Path(clean_path),
+            base_dir / clean_path / "index.html",
+            base_dir / clean_path / "index.txt",
+            base_dir / f"{clean_path}.html",
+            base_dir / f"{clean_path}.txt",
+        ]
+        if clean_path.endswith(".txt"):
+            route_path = clean_path[:-4].strip("/")
+            if route_path:
+                candidates.append(base_dir / route_path / "index.txt")
     for candidate in candidates:
         try:
             candidate.resolve().relative_to(base_dir)

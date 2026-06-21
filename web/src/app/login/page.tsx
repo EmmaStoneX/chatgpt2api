@@ -10,14 +10,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { HeaderActions } from "@/components/header-actions";
 import { login } from "@/lib/api";
+import { useAuth } from "@/lib/auth-provider";
 import { useRedirectIfAuthenticated } from "@/lib/use-auth-guard";
-import { getDefaultRouteForRole, setStoredAuthSession } from "@/store/auth";
+import { getDefaultRouteForRole } from "@/store/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [authKey, setAuthKey] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isCheckingAuth } = useRedirectIfAuthenticated();
+  const auth = useAuth();
 
   const handleLogin = async () => {
     const normalizedAuthKey = authKey.trim();
@@ -29,7 +31,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const data = await login(normalizedAuthKey);
-      await setStoredAuthSession({
+      await auth.setSession({
         key: normalizedAuthKey,
         role: data.role,
         subjectId: data.subject_id,
@@ -63,7 +65,7 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight text-stone-950">欢迎回来</h1>
-              <p className="text-sm leading-6 text-stone-500">输入密钥后继续使用账号管理和图片生成功能。</p>
+              <p className="mx-auto max-w-[18rem] text-pretty-cjk text-sm leading-6 text-stone-500">输入密钥后继续使用账号管理和图片生成功能。</p>
             </div>
           </div>
 
@@ -82,12 +84,12 @@ export default function LoginPage() {
                 }
               }}
               placeholder="请输入密钥"
-              className="h-13 rounded-2xl border-stone-200 bg-white px-4"
+              className="h-11 rounded-xl border-stone-200 bg-white px-4"
             />
           </div>
 
           <Button
-            className="h-13 w-full rounded-2xl bg-stone-950 text-white hover:bg-stone-800"
+            className="h-11 w-full rounded-xl bg-stone-950 text-white hover:bg-stone-800"
             onClick={() => void handleLogin()}
             disabled={isSubmitting}
           >

@@ -73,7 +73,7 @@ export function RegisterCard() {
                 <h2 className="text-lg font-semibold tracking-tight">注册配置</h2>
               </div>
             </div>
-            <Button className="h-9 w-full rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800 sm:w-auto" onClick={() => void save()} disabled={isSaving || config.enabled}>
+            <Button className="w-full rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800 sm:w-auto" onClick={() => void save()} disabled={isSaving || config.enabled}>
               {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
               保存配置
             </Button>
@@ -88,7 +88,7 @@ export function RegisterCard() {
             <div className="space-y-2">
               <label className="text-sm text-stone-700">注册模式</label>
               <Select value={config.mode || "total"} onValueChange={(value) => setMode(value as "total" | "quota" | "available")} disabled={config.enabled}>
-                <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white">
+                <SelectTrigger className="border-stone-200 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -100,27 +100,27 @@ export function RegisterCard() {
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">注册总数</label>
-              <Input value={String(config.total)} onChange={(event) => setTotal(event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled || config.mode !== "total"} />
+              <Input value={String(config.total)} onChange={(event) => setTotal(event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled || config.mode !== "total"} />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">线程数</label>
-              <Input value={String(config.threads)} onChange={(event) => setThreads(event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+              <Input value={String(config.threads)} onChange={(event) => setThreads(event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled} />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">注册代理</label>
-              <Input value={config.proxy} onChange={(event) => setProxy(event.target.value)} placeholder="http://127.0.0.1:7890" className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+              <Input value={config.proxy} onChange={(event) => setProxy(event.target.value)} placeholder="http://127.0.0.1:7890" className="border-stone-200 bg-white" disabled={config.enabled} />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">目标剩余额度</label>
-              <Input value={String(config.target_quota || "")} onChange={(event) => setTargetQuota(event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled || config.mode !== "quota"} />
+              <Input value={String(config.target_quota || "")} onChange={(event) => setTargetQuota(event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled || config.mode !== "quota"} />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">目标可用账号</label>
-              <Input value={String(config.target_available || "")} onChange={(event) => setTargetAvailable(event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled || config.mode !== "available"} />
+              <Input value={String(config.target_available || "")} onChange={(event) => setTargetAvailable(event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled || config.mode !== "available"} />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-stone-700">检查间隔（秒）</label>
-              <Input value={String(config.check_interval || "")} onChange={(event) => setCheckInterval(event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled || config.mode === "total"} />
+              <Input value={String(config.check_interval || "")} onChange={(event) => setCheckInterval(event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled || config.mode === "total"} />
             </div>
           </div>
 
@@ -130,7 +130,7 @@ export function RegisterCard() {
                 <h3 className="text-sm font-semibold text-stone-800">邮箱配置</h3>
                 <p className="mt-1 text-xs text-stone-500">可配置多个 provider，按启用顺序轮换。</p>
               </div>
-              <Button type="button" variant="outline" className="h-9 w-full rounded-xl border-stone-200 bg-white px-3 text-stone-700 sm:w-auto" onClick={addProvider} disabled={config.enabled}>
+              <Button type="button" variant="outline" className="w-full rounded-xl border-stone-200 bg-white px-3 text-stone-700 sm:w-auto" onClick={addProvider} disabled={config.enabled}>
                 <Plus className="size-4" />
                 添加
               </Button>
@@ -139,15 +139,15 @@ export function RegisterCard() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">请求超时</label>
-                <Input value={String(config.mail.request_timeout || "")} onChange={(event) => setMailField("request_timeout", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                <Input value={String(config.mail.request_timeout || "")} onChange={(event) => setMailField("request_timeout", event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">等待验证码超时</label>
-                <Input value={String(config.mail.wait_timeout || "")} onChange={(event) => setMailField("wait_timeout", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                <Input value={String(config.mail.wait_timeout || "")} onChange={(event) => setMailField("wait_timeout", event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-stone-700">轮询间隔</label>
-                <Input value={String(config.mail.wait_interval || "")} onChange={(event) => setMailField("wait_interval", event.target.value)} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                <Input value={String(config.mail.wait_interval || "")} onChange={(event) => setMailField("wait_interval", event.target.value)} className="border-stone-200 bg-white" disabled={config.enabled} />
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export function RegisterCard() {
                       <div className="space-y-2">
                         <label className="text-sm text-stone-700">类型</label>
                         <Select value={type} onValueChange={(value) => updateProviderType(index, value)} disabled={config.enabled}>
-                          <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white">
+                          <SelectTrigger className="border-stone-200 bg-white">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -193,24 +193,24 @@ export function RegisterCard() {
                         <>
                           <div className="space-y-2">
                             <label className="text-sm text-stone-700">{type === "cloudmail_gen" ? "CloudMail URL" : "API Base"}</label>
-                            <Input value={String(provider.api_base || "")} onChange={(event) => updateProvider(index, { api_base: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                            <Input value={String(provider.api_base || "")} onChange={(event) => updateProvider(index, { api_base: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                           </div>
                           {type === "cloudmail_gen" ? (
                             <>
                               <div className="space-y-2">
                                 <label className="text-sm text-stone-700">管理员邮箱</label>
-                                <Input value={String(provider.admin_email || "")} onChange={(event) => updateProvider(index, { admin_email: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                                <Input value={String(provider.admin_email || "")} onChange={(event) => updateProvider(index, { admin_email: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                               </div>
                               <div className="space-y-2">
                                 <label className="text-sm text-stone-700">管理员密码</label>
-                                <Input value={String(provider.admin_password || "")} onChange={(event) => updateProvider(index, { admin_password: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                                <Input value={String(provider.admin_password || "")} onChange={(event) => updateProvider(index, { admin_password: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                               </div>
                             </>
                           ) : null}
                           {type === "cloudflare_temp_email" || type === "ddg_mail" ? (
                             <div className="space-y-2">
                               <label className="text-sm text-stone-700">Admin Password</label>
-                              <Input value={String(provider.admin_password || "")} onChange={(event) => updateProvider(index, { admin_password: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                              <Input value={String(provider.admin_password || "")} onChange={(event) => updateProvider(index, { admin_password: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                             </div>
                           ) : null}
                         </>
@@ -219,11 +219,11 @@ export function RegisterCard() {
                         <>
                         <div className="space-y-2">
                           <label className="text-sm text-stone-700">DDG Token <span className="text-red-400">*</span></label>
-                          <Input value={String(provider.ddg_token || "")} onChange={(event) => updateProvider(index, { ddg_token: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} placeholder="DuckDuckGo Email Protection 的 Bearer Token" />
+                          <Input value={String(provider.ddg_token || "")} onChange={(event) => updateProvider(index, { ddg_token: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} placeholder="DuckDuckGo Email Protection 的 Bearer Token" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm text-stone-700">CF Inbox JWT <span className="text-red-400">*</span></label>
-                          <Input value={String(provider.cf_inbox_jwt || "")} onChange={(event) => updateProvider(index, { cf_inbox_jwt: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} placeholder="CF 临时邮箱后端的固定收件箱 JWT（DDG 转发目标）" />
+                          <Input value={String(provider.cf_inbox_jwt || "")} onChange={(event) => updateProvider(index, { cf_inbox_jwt: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} placeholder="CF 临时邮箱后端的固定收件箱 JWT（DDG 转发目标）" />
                         </div>
                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                           <p className="font-medium mb-1">使用说明</p>
@@ -245,20 +245,20 @@ export function RegisterCard() {
                       {type === "tempmail_lol" || type === "moemail" || type === "duckmail" || type === "gptmail" || type === "yyds_mail" ? (
                         <div className="space-y-2">
                           <label className="text-sm text-stone-700">API Key</label>
-                          <Input value={String(provider.api_key || "")} onChange={(event) => updateProvider(index, { api_key: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                          <Input value={String(provider.api_key || "")} onChange={(event) => updateProvider(index, { api_key: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
                       {type === "duckmail" || type === "gptmail" ? (
                         <div className="space-y-2">
                           <label className="text-sm text-stone-700">Default Domain</label>
-                          <Input value={String(provider.default_domain || "")} onChange={(event) => updateProvider(index, { default_domain: event.target.value })} placeholder={type === "duckmail" ? "duckmail.sbs" : ""} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                          <Input value={String(provider.default_domain || "")} onChange={(event) => updateProvider(index, { default_domain: event.target.value })} placeholder={type === "duckmail" ? "duckmail.sbs" : ""} className="border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
                       {type === "yyds_mail" ? (
                         <>
                           <div className="space-y-2">
                             <label className="text-sm text-stone-700">Subdomain</label>
-                            <Input value={String(provider.subdomain || "")} onChange={(event) => updateProvider(index, { subdomain: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                            <Input value={String(provider.subdomain || "")} onChange={(event) => updateProvider(index, { subdomain: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                           </div>
                           <label className="flex items-center gap-3 pt-8 text-sm text-stone-700">
                             <Checkbox checked={Boolean(provider.wildcard)} onCheckedChange={(checked) => updateProvider(index, { wildcard: Boolean(checked) })} disabled={config.enabled} />
@@ -271,7 +271,7 @@ export function RegisterCard() {
                           <div className="space-y-2">
                             <label className="text-sm text-stone-700">读取方式</label>
                             <Select value={String(provider.mode || "graph")} onValueChange={(value) => updateProvider(index, { mode: value })} disabled={config.enabled}>
-                              <SelectTrigger className="h-10 rounded-xl border-stone-200 bg-white">
+                              <SelectTrigger className="border-stone-200 bg-white">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -284,7 +284,7 @@ export function RegisterCard() {
                           {String(provider.mode || "graph") !== "graph" ? (
                             <div className="space-y-2">
                               <label className="text-sm text-stone-700">IMAP Host</label>
-                              <Input value={String(provider.imap_host || "outlook.office365.com")} onChange={(event) => updateProvider(index, { imap_host: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
+                              <Input value={String(provider.imap_host || "outlook.office365.com")} onChange={(event) => updateProvider(index, { imap_host: event.target.value })} className="border-stone-200 bg-white" disabled={config.enabled} />
                             </div>
                           ) : null}
                         </>
@@ -304,23 +304,23 @@ export function RegisterCard() {
                           </label>
                           <Textarea value={String(provider.mailboxes || "")} onChange={(event) => updateProvider(index, { mailboxes: event.target.value })} placeholder={"每行一个邮箱，格式：\n邮箱----密码----client_id----refresh_token\n（出于安全，已保存的密码/refresh_token 不会回显；此处仅用于新增或覆盖）"} className="min-h-32 rounded-xl border-stone-200 bg-white font-mono text-xs" disabled={config.enabled} />
                           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                            <span className="rounded-md bg-stone-100 px-2 py-1 text-stone-600">未使用 {stats.unused ?? 0}</span>
-                            <span className="rounded-md bg-blue-50 px-2 py-1 text-blue-600">占用中 {stats.in_use ?? 0}</span>
-                            <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">已用 {stats.used ?? 0}</span>
-                            <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-700">token失效 {stats.token_invalid ?? 0}</span>
-                            <span className="rounded-md bg-rose-50 px-2 py-1 text-rose-600">失败 {stats.failed ?? 0}</span>
+                            <Badge variant="secondary">未使用 {stats.unused ?? 0}</Badge>
+                            <Badge variant="info">占用中 {stats.in_use ?? 0}</Badge>
+                            <Badge variant="success">已用 {stats.used ?? 0}</Badge>
+                            <Badge variant="warning">token失效 {stats.token_invalid ?? 0}</Badge>
+                            <Badge variant="danger">失败 {stats.failed ?? 0}</Badge>
                           </div>
                           {preview.length ? (
                             <p className="text-xs text-stone-400">已保存邮箱（脱敏）：{preview.slice(0, 8).join("、")}{preview.length > 8 ? ` 等 ${preview.length} 个` : ""}</p>
                           ) : null}
                           <div className="flex flex-wrap items-center gap-2">
-                            <Button type="button" variant="outline" className="h-8 rounded-lg border-stone-200 bg-white px-3 text-xs text-stone-700" onClick={() => void resetOutlookPool("failed")} disabled={config.enabled}>
+                            <Button type="button" variant="outline" size="sm" className="border-stone-200 bg-white text-stone-700" onClick={() => void resetOutlookPool("failed")} disabled={config.enabled}>
                               清除失败/占用状态
                             </Button>
-                            <Button type="button" variant="outline" className="h-8 rounded-lg border-amber-200 bg-white px-3 text-xs text-amber-700 hover:bg-amber-50" onClick={() => { if (window.confirm("确定要从 Outlook 邮箱池中删除所有未使用邮箱吗？此操作会移除这些已保存凭据。")) void resetOutlookPool("unused"); }} disabled={config.enabled}>
+                            <Button type="button" variant="outline" size="sm" className="border-amber-200 bg-white text-amber-700 hover:bg-amber-50" onClick={() => { if (window.confirm("确定要从 Outlook 邮箱池中删除所有未使用邮箱吗？此操作会移除这些已保存凭据。")) void resetOutlookPool("unused"); }} disabled={config.enabled}>
                               清空未使用
                             </Button>
-                            <Button type="button" variant="outline" className="h-8 rounded-lg border-rose-200 bg-white px-3 text-xs text-rose-600 hover:bg-rose-50" onClick={() => { if (window.confirm("确定要重置整个 Outlook 邮箱池状态吗？所有邮箱会被标记为可重新使用。")) void resetOutlookPool("all"); }} disabled={config.enabled}>
+                            <Button type="button" variant="outline" size="sm" className="border-rose-200 bg-white text-rose-600 hover:bg-rose-50" onClick={() => { if (window.confirm("确定要重置整个 Outlook 邮箱池状态吗？所有邮箱会被标记为可重新使用。")) void resetOutlookPool("all"); }} disabled={config.enabled}>
                               重置全部状态
                             </Button>
                           </div>
@@ -356,7 +356,7 @@ export function RegisterCard() {
                 <h2 className="text-lg font-semibold tracking-tight">运行结果</h2>
                 <p className="mt-1 text-sm text-stone-500">SSE 实时推送当前状态。</p>
               </div>
-              <Badge variant={config.enabled ? "success" : "secondary"} className="rounded-md">
+              <Badge variant={config.enabled ? "success" : "secondary"}>
                 {config.enabled ? "运行中" : "已停止"}
               </Badge>
             </div>
@@ -378,15 +378,15 @@ export function RegisterCard() {
               ))}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <Button className="h-10 rounded-xl bg-stone-950 px-3 text-white hover:bg-stone-800" onClick={() => void toggle()} disabled={isSaving}>
+              <Button className="bg-stone-950 px-3 text-white hover:bg-stone-800" onClick={() => void toggle()} disabled={isSaving}>
                 {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : config.enabled ? <Square className="size-4" /> : <Play className="size-4" />}
                 {config.enabled ? "停止" : "启动"}
               </Button>
-              <Button variant="outline" className="h-10 rounded-xl border-stone-200 bg-white px-3 text-stone-700" onClick={() => void reset()} disabled={isSaving || config.enabled}>
+              <Button variant="outline" className="border-stone-200 bg-white px-3 text-stone-700" onClick={() => void reset()} disabled={isSaving || config.enabled}>
                 <RotateCcw className="size-4" />
                 重置
               </Button>
-              <Button variant="outline" className="h-10 rounded-xl border-stone-200 bg-white px-3 text-stone-700" onClick={() => void save()} disabled={isSaving || config.enabled}>
+              <Button variant="outline" className="border-stone-200 bg-white px-3 text-stone-700" onClick={() => void save()} disabled={isSaving || config.enabled}>
                 <Save className="size-4" />
                 保存
               </Button>
@@ -403,7 +403,7 @@ export function RegisterCard() {
                 <h3 className="text-sm font-semibold text-stone-900">实时日志</h3>
                 <p className="mt-1 text-xs text-amber-700">遇到 HTTP 状态码 400 等错误，基本是邮箱滥用被封，需要更换新的域名邮箱。</p>
               </div>
-              <Badge variant="secondary" className="rounded-md">
+              <Badge variant="secondary">
                 {logs.length}
               </Badge>
             </div>
