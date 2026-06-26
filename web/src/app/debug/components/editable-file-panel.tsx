@@ -72,20 +72,55 @@ const fileNameOf = (url: string) => {
   }
 };
 
+const fileNameFromDisposition = (value: string | null) => {
+  const encoded = value?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (encoded) return decodeURIComponent(encoded);
+  return value?.match(/filename="?([^";]+)"?/i)?.[1] || "";
+};
+
 function ResultFile({ href, icon, label }: { href?: string; icon: ReactNode; label: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+
   if (!href) return null;
+
+  const download = async () => {
+    setDownloadError("");
+    setDownloading(true);
+    try {
+      const response = await fetch(href, { credentials: "include" });
+      if (!response.ok) throw new Error(`下载失败 (${response.status})`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileNameFromDisposition(response.headers.get("content-disposition")) || fileNameOf(href) || "download";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-stone-700 shadow-sm dark:bg-white/10 dark:text-stone-200">
-        {icon}
+    <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-stone-700 shadow-sm dark:bg-white/10 dark:text-stone-200">
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-stone-950 dark:text-stone-50">{label}</div>
+          <div className="truncate text-xs text-stone-500 dark:text-stone-400">{fileNameOf(href)}</div>
+        </div>
+        <Button size="sm" onClick={() => void download()} disabled={downloading}>
+          {downloading ? "下载中" : "下载"}
+        </Button>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-stone-950 dark:text-stone-50">{label}</div>
-        <div className="truncate text-xs text-stone-500 dark:text-stone-400">{fileNameOf(href)}</div>
-      </div>
-      <Button size="sm" asChild>
-        <a href={href} target="_blank" rel="noreferrer">下载</a>
-      </Button>
+      {downloadError ? <div className="text-xs text-rose-600 dark:text-rose-300">{downloadError}</div> : null}
     </div>
   );
 }
