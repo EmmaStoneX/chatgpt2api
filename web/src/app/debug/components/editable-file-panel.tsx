@@ -72,10 +72,12 @@ const fileNameOf = (url: string) => {
   }
 };
 
-const fileNameFromDisposition = (value: string | null) => {
-  const encoded = value?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
-  if (encoded) return decodeURIComponent(encoded);
-  return value?.match(/filename="?([^";]+)"?/i)?.[1] || "";
+const sameOriginFileUrl = (url: string) => {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.pathname.startsWith("/files/")) return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {}
+  return url;
 };
 
 function ResultFile({ href, icon, label }: { href?: string; icon: ReactNode; label: string }) {
@@ -84,25 +86,20 @@ function ResultFile({ href, icon, label }: { href?: string; icon: ReactNode; lab
 
   if (!href) return null;
 
-  const download = async () => {
+  const download = () => {
     setDownloadError("");
     setDownloading(true);
     try {
-      const response = await fetch(href, { credentials: "include" });
-      if (!response.ok) throw new Error(`下载失败 (${response.status})`);
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = fileNameFromDisposition(response.headers.get("content-disposition")) || fileNameOf(href) || "download";
+      link.href = sameOriginFileUrl(href);
+      link.download = fileNameOf(href) || "download";
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(objectUrl);
     } catch (err) {
       setDownloadError(err instanceof Error ? err.message : String(err));
     } finally {
-      setDownloading(false);
+      window.setTimeout(() => setDownloading(false), 300);
     }
   };
 
@@ -116,7 +113,7 @@ function ResultFile({ href, icon, label }: { href?: string; icon: ReactNode; lab
           <div className="text-sm font-semibold text-stone-950 dark:text-stone-50">{label}</div>
           <div className="truncate text-xs text-stone-500 dark:text-stone-400">{fileNameOf(href)}</div>
         </div>
-        <Button size="sm" onClick={() => void download()} disabled={downloading}>
+        <Button size="sm" onClick={download} disabled={downloading}>
           {downloading ? "下载中" : "下载"}
         </Button>
       </div>
