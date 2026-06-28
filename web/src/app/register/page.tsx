@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
 
+import { PageShell } from "@/components/layout/page-scroll";
 import webConfig from "@/constants/common-env";
 import { useAuthGuard } from "@/lib/use-auth-guard";
 import type { RegisterConfig } from "@/lib/api";
@@ -44,7 +45,7 @@ function RegisterDataController() {
 
 function RegisterPageContent() {
   return (
-    <>
+    <PageShell>
       <RegisterDataController />
       <section className="mb-2 flex flex-col gap-1 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-1">
@@ -55,7 +56,7 @@ function RegisterPageContent() {
       <section>
         <RegisterCard />
       </section>
-    </>
+    </PageShell>
   );
 }
 

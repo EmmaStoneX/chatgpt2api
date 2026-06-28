@@ -8,6 +8,7 @@ import { ImageComposer } from "@/app/image/components/image-composer";
 import { ImageResults, type ImageLightboxItem } from "@/app/image/components/image-results";
 import { ImageSidebar } from "@/app/image/components/image-sidebar";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { PageViewportShell, ScrollRegion } from "@/components/layout/page-scroll";
 import {
   Dialog,
   DialogContent,
@@ -1604,7 +1605,10 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <section className="mx-auto grid h-[calc(100dvh-3.5rem)] min-h-0 w-full max-w-[1380px] grid-cols-1 gap-2 overflow-hidden px-0 pb-0 sm:h-[calc(100dvh-5.25rem)] sm:gap-3 sm:px-3 sm:pb-0 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <PageViewportShell
+        wheelTargetRef={resultsViewportRef}
+        className="mx-auto grid h-[calc(100dvh-3.5rem)] w-full max-w-[1380px] grid-cols-1 gap-2 overflow-hidden px-0 pb-0 sm:h-[calc(100dvh-5.25rem)] sm:gap-3 sm:px-3 sm:pb-0 lg:grid-cols-[240px_minmax(0,1fr)]"
+      >
         <div className="hidden h-full min-h-0 border-r border-stone-200/70 pr-3 lg:block">
           <ImageSidebar
             conversations={conversations}
@@ -1696,10 +1700,10 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           <div className="relative min-h-0 flex-1">
-            <div
+            <ScrollRegion
               ref={resultsViewportRef}
               onScroll={handleResultsScroll}
-              className="hide-scrollbar h-full overscroll-contain overflow-y-auto px-1 py-2 sm:px-4 sm:py-4"
+              className="hide-scrollbar h-full px-1 py-2 sm:px-4 sm:py-4"
               style={{ contain: "layout style paint" }}
             >
               <ImageResults
@@ -1715,7 +1719,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
                 onDismissErrors={handleDismissErrors}
                 formatConversationTime={formatConversationTime}
               />
-            </div>
+            </ScrollRegion>
 
             <button
               ref={scrollToLatestBtnRef}
@@ -1759,7 +1763,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
             onRemoveReferenceImage={handleRemoveReferenceImage}
           />
         </div>
-      </section>
+      </PageViewportShell>
 
       <ImageLightbox
         images={lightboxImages}

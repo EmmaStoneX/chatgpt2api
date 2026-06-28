@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { PageShell } from "@/components/layout/page-scroll";
 import { ImageThumbnail, getImageThumbnailUrl } from "@/components/image-thumbnail";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,7 @@ function LogsContent() {
   }, [type, startDate, endDate]);
 
   return (
-    <section className="space-y-5">
+    <PageShell>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
           <div className="text-xs font-semibold tracking-[0.18em] text-stone-500 uppercase">Logs</div>
@@ -343,7 +344,7 @@ function LogsContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </section>
+    </PageShell>
   );
 }
 

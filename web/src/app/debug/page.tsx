@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
+import { PageShell } from "@/components/layout/page-scroll";
 import { useAuthGuard } from "@/lib/use-auth-guard";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ export default function DebugPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-[1600px] min-w-0 flex-col gap-4 px-0 pt-3 pb-6 md:px-8">
+    <PageShell className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-[1600px] flex-col gap-4 space-y-0 px-0 pt-3 md:px-8">
       <div className="min-w-0 px-1">
         <div className="grid min-h-10 w-full grid-cols-5 items-center rounded-xl sm:inline-flex sm:w-fit">
           {tabs.map(({ value, title }) => (
@@ -68,6 +69,6 @@ export default function DebugPage() {
       <div hidden={activeTab !== "chat"} className="min-h-0">
         <ChatPanel />
       </div>
-    </div>
+    </PageShell>
   );
 }

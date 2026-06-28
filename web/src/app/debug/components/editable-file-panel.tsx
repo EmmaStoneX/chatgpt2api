@@ -304,7 +304,7 @@ export function EditableFilePanel({ title, kind, endpoint, defaultPrompt, imageR
 
   return (
     <>
-    <div className="grid min-h-0 gap-3 lg:min-h-[calc(100dvh-9.25rem)] lg:gap-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-stone-200 lg:bg-white lg:shadow-sm lg:dark:border-white/10 lg:dark:bg-stone-950 lg:grid-cols-[minmax(220px,288px)_minmax(320px,420px)_minmax(0,1fr)]">
+    <div className="grid min-h-0 gap-3 lg:gap-0 lg:rounded-2xl lg:border lg:border-stone-200 lg:bg-white lg:shadow-sm lg:dark:border-white/10 lg:dark:bg-stone-950 lg:grid-cols-[minmax(220px,288px)_minmax(320px,420px)_minmax(0,1fr)]">
       <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-white/10 dark:bg-stone-950 lg:rounded-none lg:border-0 lg:border-r lg:bg-stone-50/70 lg:shadow-none lg:dark:bg-white/[0.02]">
         <div className="flex h-14 items-center justify-between border-b border-stone-200 px-4 dark:border-white/10">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-50">
@@ -323,7 +323,7 @@ export function EditableFilePanel({ title, kind, endpoint, defaultPrompt, imageR
             </Button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto p-2">
+        <div className="p-2">
           {visibleTasks.length ? visibleTasks.map((task) => {
             const id = taskIdOf(task);
             const taskTitle = drafts[id]?.title || titleOfPrompt(task.prompt_preview || drafts[id]?.prompt || "", task.kind?.toUpperCase() || title);
@@ -382,7 +382,7 @@ export function EditableFilePanel({ title, kind, endpoint, defaultPrompt, imageR
             生成
           </Button>
         </div>
-        <div className="min-h-0 flex-1 space-y-5 overflow-auto p-5">
+        <div className="space-y-5 p-5">
           <div className="space-y-2">
             <Label htmlFor={`${endpoint}-prompt`} className="text-xs font-semibold text-stone-700 dark:text-stone-300">需求</Label>
             <Textarea id={`${endpoint}-prompt`} value={prompt} onChange={(event) => setPrompt(event.target.value)} className="min-h-56 border-stone-200 bg-white text-sm leading-6 shadow-none dark:border-white/10 dark:bg-white/[0.03]" />
@@ -420,7 +420,7 @@ export function EditableFilePanel({ title, kind, endpoint, defaultPrompt, imageR
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">生成状态</h2>
           {selectedTask ? <span className={cn("inline-flex min-h-6 items-center rounded-full border px-2.5 text-xs font-medium leading-none", statusClass(selectedTask.status))}>{statusText(selectedTask.status)}</span> : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto p-5">
+        <div className="p-5">
           {selectedTask ? (
             <div className="space-y-5">
               <div className="grid gap-3 sm:grid-cols-[150px_150px_minmax(0,1fr)]">

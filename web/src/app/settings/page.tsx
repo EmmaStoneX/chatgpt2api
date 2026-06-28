@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
 
+import { PageShell } from "@/components/layout/page-scroll";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthGuard } from "@/lib/use-auth-guard";
 
@@ -76,7 +77,7 @@ function SettingsDataController() {
 
 function SettingsPageContent() {
   return (
-    <>
+    <PageShell>
       <SettingsDataController />
       <SettingsHeader />
       <Tabs defaultValue="basic" className="min-w-0 space-y-4">
@@ -116,7 +117,7 @@ function SettingsPageContent() {
       </Tabs>
       <CPAPoolDialog />
       <ImportBrowserDialog />
-    </>
+    </PageShell>
   );
 }
 

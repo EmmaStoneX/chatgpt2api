@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LoaderCircle, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
+import { PageShell } from "@/components/layout/page-scroll";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,14 +49,14 @@ export default function LoginPage() {
 
   if (isCheckingAuth) {
     return (
-      <div className="grid min-h-[calc(100vh-1rem)] w-full place-items-center px-4 py-6">
+      <PageShell className="grid min-h-[calc(100vh-1rem)] w-full place-items-center space-y-0 px-4 py-6">
         <LoaderCircle className="size-5 animate-spin text-stone-400" />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-1rem)] w-full place-items-center px-4 py-6">
+    <PageShell className="grid min-h-[calc(100vh-1rem)] w-full place-items-center space-y-0 px-4 py-6">
       <HeaderActions className="fixed top-4 right-4 z-10" />
       <Card className="w-full max-w-[505px] rounded-[30px] border-white/80 bg-white/95 shadow-[0_28px_90px_rgba(28,25,23,0.10)]">
         <CardContent className="space-y-7 p-6 sm:p-8">
@@ -98,6 +99,6 @@ export default function LoginPage() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }
