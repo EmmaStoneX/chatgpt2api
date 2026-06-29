@@ -294,18 +294,30 @@ def create_router(app_version: str) -> APIRouter:
         return await run_in_threadpool(delete_to_target, target_free_mb, dry_run)
 
     @router.get("/health", response_model=None)
-    async def health_dashboard(format: str = Query(default="html")):
+    async def health_dashboard(format: str = Query(default="html"), authorization: str | None = Header(default=None)):
         from services.account_service import account_service as acct_svc
         stats = acct_svc.get_stats()
-        storage = config.get_storage_backend()
-        storage_health = storage.health_check()
         healthy = stats["active"] > 0 or stats["unlimited_quota_count"] > 0
+        public_json = {"status": "ok" if healthy else "degraded"}
+        if not authorization:
+            if format == "json":
+                return public_json
+            return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="zh">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>chatgpt2api health</title>
+<style>body{{font-family:system-ui,-apple-system,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;display:grid;place-items:center}}.card{{background:#1a1d27;border:1px solid #2a2d3a;border-radius:12px;padding:24px 32px}}.ok{{color:#22c55e}}.degraded{{color:#f59e0b}}</style>
+<meta http-equiv="refresh" content="30">
+</head>
+<body><div class="card"><h1>chatgpt2api</h1><p class="{'ok' if healthy else 'degraded'}">{public_json['status']}</p></div></body></html>""")
 
+        require_admin(authorization)
+        storage = config.get_storage_backend()
         stats_json = {
             "status": "ok" if healthy else "degraded",
             "healthy": healthy,
             "version": app_version,
-            "storage": {"backend": storage.get_backend_info(), "health": storage_health},
+            "storage": {"backend": storage.get_backend_info(), "health": storage.health_check()},
             "proxy_runtime": proxy_settings.get_runtime_status(),
             "accounts": stats,
         }
