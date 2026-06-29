@@ -128,13 +128,60 @@ function useNativeWheelFallback(containerRef: React.RefObject<HTMLElement | null
   }, [containerRef, targetRef]);
 }
 
+function getDocumentScrollTarget() {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const scrollElement = document.scrollingElement || document.documentElement;
+  return scrollElement instanceof HTMLElement ? scrollElement : null;
+}
+
+function useDocumentWheelFallback() {
+  return React.useCallback((event: React.WheelEvent<HTMLElement>) => {
+    const nativeEvent = event.nativeEvent as RoutedWheelEvent;
+    if (nativeEvent[WHEEL_ROUTED_FLAG]) {
+      return;
+    }
+    if (routeWheelToTarget(event, event.currentTarget, getDocumentScrollTarget())) {
+      nativeEvent[WHEEL_ROUTED_FLAG] = true;
+    }
+  }, []);
+}
+
+function useNativeDocumentWheelFallback() {
+  React.useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      if (!document.body) {
+        return;
+      }
+      routeWheelToTarget(event, document.body, getDocumentScrollTarget());
+    };
+
+    document.addEventListener("wheel", handleWheel, { capture: true, passive: false });
+    return () => {
+      document.removeEventListener("wheel", handleWheel, { capture: true });
+    };
+  }, []);
+}
+
 export function PageShell({
   className,
   children,
+  onWheelCapture,
   ...props
 }: React.ComponentProps<"section">) {
+  const handleWheelCapture = useDocumentWheelFallback();
+  useNativeDocumentWheelFallback();
+
   return (
-    <section className={cn("min-w-0 space-y-5 pb-6", className)} {...props}>
+    <section
+      className={cn("min-w-0 space-y-5 pb-6", className)}
+      onWheelCapture={(event) => {
+        onWheelCapture?.(event);
+        handleWheelCapture(event);
+      }}
+      {...props}
+    >
       {children}
     </section>
   );

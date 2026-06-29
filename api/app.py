@@ -16,6 +16,15 @@ from services.config import config
 from services.image_service import start_image_cleanup_scheduler
 
 
+def _web_asset_headers(full_path: str, *, asset_name: str = "", fallback: bool = False) -> dict[str, str]:
+    clean_path = full_path.strip("/")
+    if fallback or not clean_path or clean_path.endswith((".html", ".txt")) or asset_name.endswith((".html", ".txt")):
+        return {"Cache-Control": "no-store"}
+    if clean_path.startswith("_next/static/"):
+        return {"Cache-Control": "public, max-age=31536000, immutable"}
+    return {"Cache-Control": "public, max-age=3600"}
+
+
 def _env_flag(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None:
@@ -61,12 +70,12 @@ def create_app() -> FastAPI:
         async def serve_web(full_path: str):
             asset = resolve_web_asset(full_path)
             if asset is not None:
-                return FileResponse(asset)
+                return FileResponse(asset, headers=_web_asset_headers(full_path, asset_name=asset.name))
             if full_path.strip("/").startswith("_next/"):
                 raise HTTPException(status_code=404, detail="Not Found")
             fallback = resolve_web_asset("")
             if fallback is None:
                 raise HTTPException(status_code=404, detail="Not Found")
-            return FileResponse(fallback)
+            return FileResponse(fallback, headers=_web_asset_headers(full_path, fallback=True))
 
     return app
