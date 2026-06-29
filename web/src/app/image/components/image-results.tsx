@@ -16,8 +16,12 @@ export type ImageLightboxItem = {
 
 type ImageResultsProps = {
   selectedConversation: ImageConversation | null;
+  selectedImageIds: Set<string>;
   onOpenLightbox: (images: ImageLightboxItem[], index: number) => void;
   onContinueEdit: (conversationId: string, image: StoredImage | StoredReferenceImage) => void;
+  onToggleImageSelection: (imageId: string) => void;
+  onExportAll: () => void | Promise<void>;
+  onExportSelected: () => void | Promise<void>;
   onDeletePrompt: (conversationId: string, turnId: string) => void;
   onDeleteResults: (conversationId: string, turnId: string) => void;
   onReuseTurnConfig: (conversationId: string, turnId: string) => void | Promise<void>;
@@ -53,6 +57,9 @@ function normalizeStoredImageUrl(url: string) {
 }
 
 function getStoredImageSrc(image: StoredImage) {
+  if (image.expired) {
+    return "";
+  }
   if (image.b64_json) {
     let url = b64BlobUrlCache.get(image.b64_json);
     if (!url) {
@@ -66,6 +73,13 @@ function getStoredImageSrc(image: StoredImage) {
     return url;
   }
   return normalizeStoredImageUrl(image.url || "");
+}
+
+function getReferenceImageSrc(image: StoredReferenceImage) {
+  if (image.expired) {
+    return "";
+  }
+  return image.dataUrl || normalizeStoredImageUrl(image.url || "");
 }
 
 async function downloadStoredImage(image: StoredImage, index: number) {
@@ -108,8 +122,12 @@ async function downloadStoredImage(image: StoredImage, index: number) {
 
 export function ImageResults({
   selectedConversation,
+  selectedImageIds,
   onOpenLightbox,
   onContinueEdit,
+  onToggleImageSelection,
+  onExportAll,
+  onExportSelected,
   onDeletePrompt,
   onDeleteResults,
   onReuseTurnConfig,
@@ -167,15 +185,49 @@ export function ImageResults({
     );
   }
 
+  const exportableImages = selectedConversation.turns.flatMap((turn) =>
+    turn.resultsDeleted
+      ? []
+      : turn.images.filter((image) => image.status === "success" && !image.expired && (image.rel || image.url || image.b64_json)),
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-[980px] flex-col gap-5 sm:gap-8">
+      <div className="flex flex-col gap-3 border border-amber-200 bg-amber-50/75 px-4 py-3 text-sm leading-6 text-amber-800 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <div className="font-semibold text-amber-900">图片文件仅在服务器保留 7 天</div>
+          <div className="text-xs leading-5 text-amber-700">历史会话会保留；图片过期后只显示记录，请及时导出保存。</div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full border-amber-200 bg-white px-3 text-amber-800 hover:bg-amber-100"
+            onClick={() => void onExportAll()}
+            disabled={exportableImages.length === 0}
+          >
+            <Download className="size-4" />
+            导出全部
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full border-amber-200 bg-white px-3 text-amber-800 hover:bg-amber-100"
+            onClick={() => void onExportSelected()}
+            disabled={selectedImageIds.size === 0}
+          >
+            <Download className="size-4" />
+            导出选中
+          </Button>
+        </div>
+      </div>
       {selectedConversation.turns.map((turn, turnIndex) => {
-        const referenceLightboxImages = turn.referenceImages.map((image, index) => ({
-          id: `${turn.id}-reference-${index}`,
-          src: image.dataUrl,
-        }));
+        const referenceLightboxImages = turn.referenceImages.flatMap((image, index) => {
+          const src = getReferenceImageSrc(image);
+          return src ? [{ id: `${turn.id}-reference-${index}`, src }] : [];
+        });
         const successfulTurnImages = turn.images.flatMap((image) => {
-          const src = image.status === "success" ? getStoredImageSrc(image) : "";
+          const src = image.status === "success" && !image.expired ? getStoredImageSrc(image) : "";
           return src
             ? [
                 {
@@ -234,21 +286,31 @@ export function ImageResults({
                           <div key={`${turn.id}-${image.name}-${index}`} className="flex flex-col items-end gap-2">
                             <button
                               type="button"
-                              onClick={() => onOpenLightbox(referenceLightboxImages, index)}
+                              onClick={() => {
+                                const lightboxIndex = referenceLightboxImages.findIndex((item) => item.id === `${turn.id}-reference-${index}`);
+                                if (lightboxIndex >= 0) onOpenLightbox(referenceLightboxImages, lightboxIndex);
+                              }}
                               className="group relative h-24 w-24 overflow-hidden border border-stone-200/80 bg-stone-100/60 text-left transition hover:border-stone-300"
                               aria-label={`预览参考图 ${image.name || index + 1}`}
                             >
-                              <img
-                                src={image.dataUrl}
-                                alt={image.name || `参考图 ${index + 1}`}
-                                className="absolute inset-0 h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
-                              />
+                              {getReferenceImageSrc(image) ? (
+                                <img
+                                  src={getReferenceImageSrc(image)}
+                                  alt={image.name || `参考图 ${index + 1}`}
+                                  className="absolute inset-0 h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                                />
+                              ) : (
+                                <span className="flex h-full items-center justify-center px-2 text-center text-xs leading-5 text-stone-500">
+                                  参考图已过期
+                                </span>
+                              )}
                             </button>
                             <Button
                               variant="outline"
                               size="sm"
                               className="rounded-full border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
                               onClick={() => onContinueEdit(selectedConversation.id, image)}
+                              disabled={image.expired}
                             >
                               <Sparkles className="size-4" />
                               加入编辑
@@ -270,30 +332,61 @@ export function ImageResults({
                   <div className="grid grid-cols-3 gap-2 sm:block sm:columns-2 sm:gap-4 sm:space-y-4 xl:columns-3">
                     {turn.images.map((image, index) => {
                       const imageSrc = image.status === "success" ? getStoredImageSrc(image) : "";
+                      if (image.expired) {
+                        return (
+                          <div key={image.id} className="break-inside-avoid">
+                            <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-100 px-4 text-center text-stone-500">
+                              <EyeOff className="size-5 text-stone-400" />
+                              <div className="text-sm font-medium text-stone-700">图片已过期</div>
+                              <div className="text-xs leading-5">会话记录仍保留，原始图片文件已按 7 天策略清理。</div>
+                            </div>
+                            <div className="px-0.5 py-1 text-[10px] text-stone-400 sm:px-3 sm:py-3 sm:text-xs">
+                              结果 {index + 1} · 已过期
+                            </div>
+                          </div>
+                        );
+                      }
                       if (image.status === "success" && imageSrc) {
                         const currentIndex = successfulTurnImages.findIndex((item) => item.id === image.id);
                         const sizeLabel = image.b64_json ? formatBase64ImageSize(image.b64_json) : "";
                         const dimensions = imageDimensionsRef.current[image.id];
-                        const imageMeta = [sizeLabel, dimensions].filter(Boolean).join(" · ");
+                        const expiryLabel = formatImageExpiry(image);
+                        const imageMeta = [sizeLabel, dimensions, expiryLabel].filter(Boolean).join(" · ");
+                        const selected = selectedImageIds.has(image.id);
 
                         return (
                           <div
                             key={image.id}
                             className="break-inside-avoid"
                           >
-                            <LazyImage
-                              src={imageSrc}
-                              alt={`Generated result ${index + 1}`}
-                              className="group block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl sm:aspect-auto"
-                              onLoad={(event) => {
-                                updateImageDimensions(
-                                  image.id,
-                                  event.currentTarget.naturalWidth,
-                                  event.currentTarget.naturalHeight,
-                                );
-                              }}
-                              onOpen={() => onOpenLightbox(successfulTurnImages, currentIndex)}
-                            />
+                            <div className="relative">
+                              <LazyImage
+                                src={imageSrc}
+                                alt={`Generated result ${index + 1}`}
+                                className="group block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl sm:aspect-auto"
+                                onLoad={(event) => {
+                                  updateImageDimensions(
+                                    image.id,
+                                    event.currentTarget.naturalWidth,
+                                    event.currentTarget.naturalHeight,
+                                  );
+                                }}
+                                onOpen={() => onOpenLightbox(successfulTurnImages, currentIndex)}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => onToggleImageSelection(image.id)}
+                                className={cn(
+                                  "absolute top-2 left-2 inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-xs font-semibold shadow-sm backdrop-blur transition",
+                                  selected
+                                    ? "border-stone-900 bg-stone-950 text-white"
+                                    : "border-white/80 bg-white/85 text-stone-600 hover:bg-white",
+                                )}
+                                aria-label={selected ? "取消选择图片" : "选择图片"}
+                              >
+                                {selected ? "已选" : "选择"}
+                              </button>
+                            </div>
                             <div className="flex flex-col gap-1 px-0.5 py-1 text-[10px] sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-3 sm:py-3 sm:text-xs">
                               <div className="min-w-0 text-stone-500">
                                 <span>结果 {index + 1}</span>
@@ -501,6 +594,22 @@ function formatElapsed(seconds: number): string {
 
 function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function formatImageExpiry(image: StoredImage): string {
+  if (!image.expiresAt) {
+    return "";
+  }
+  const expiresAt = new Date(image.expiresAt).getTime();
+  if (!Number.isFinite(expiresAt)) {
+    return "";
+  }
+  const diffMs = expiresAt - Date.now();
+  if (diffMs <= 0) {
+    return "已过期";
+  }
+  const days = Math.ceil(diffMs / 86400000);
+  return `剩余 ${days} 天`;
 }
 
 const base64SizeCache = new Map<string, string>();

@@ -359,6 +359,12 @@ def _auto_cleanup_worker(stop_event: threading.Event) -> None:
     while not stop_event.wait(1800):  # 每30分钟
         try:
             config.cleanup_old_images()
+            try:
+                from services.image_conversation_service import image_conversation_service
+
+                image_conversation_service.expire_old_images()
+            except Exception:
+                pass
             cleanup_image_thumbnails()
             usage = shutil.disk_usage(config.images_dir)
             free_mb = usage.free // (1024 * 1024)

@@ -35,6 +35,7 @@ import { useSettingsStore } from "@/app/settings/store";
 import {
   clearImageConversations,
   deleteImageConversation,
+  downloadImageConversationImages,
   getImageConversationStats,
   listImageConversations,
   renameImageConversation,
@@ -187,7 +188,8 @@ function buildReferenceImageFromResult(image: StoredImage, fileName: string): St
 }
 
 async function fetchImageAsFile(url: string, fileName: string) {
-  const response = await fetch(url);
+  const normalizedUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+  const response = await fetch(normalizedUrl);
   if (!response.ok) {
     throw new Error("读取结果图失败");
   }
@@ -195,12 +197,28 @@ async function fetchImageAsFile(url: string, fileName: string) {
   return new File([blob], fileName, { type: blob.type || "image/png" });
 }
 
+async function buildReferenceImageFile(image: StoredReferenceImage, fallbackName: string) {
+  if (image.expired) {
+    throw new Error("参考图已过期，不能继续编辑");
+  }
+  if (image.dataUrl) {
+    return dataUrlToFile(image.dataUrl, image.name || fallbackName, image.type);
+  }
+  if (image.url) {
+    return fetchImageAsFile(image.url, image.name || fallbackName);
+  }
+  throw new Error("参考图已不可用");
+}
+
 async function buildReferenceImageFromStoredImage(image: StoredImage, fileName: string) {
+  if (image.expired) {
+    throw new Error("图片已过期，不能继续编辑");
+  }
   const direct = buildReferenceImageFromResult(image, fileName);
   if (direct) {
     return {
       referenceImage: direct,
-      file: dataUrlToFile(direct.dataUrl, direct.name, direct.type),
+      file: dataUrlToFile(direct.dataUrl!, direct.name, direct.type),
     };
   }
 
@@ -241,6 +259,8 @@ function taskDataToStoredImage(image: StoredImage, task: ImageTask): StoredImage
       url: first.url,
       revised_prompt: first.revised_prompt,
       error: undefined,
+      expiresAt: image.expiresAt || new Date(Date.now() + 7 * 86400000).toISOString(),
+      expired: false,
       durationMs: task.duration_ms,
     };
   }
@@ -479,6 +499,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
   const [referenceImages, setReferenceImages] = useState<StoredReferenceImage[]>([]);
   const [conversations, setConversations] = useState<ImageConversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(new Set());
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [availableQuota, setAvailableQuota] = useState("加载中...");
   const [lightboxImages, setLightboxImages] = useState<ImageLightboxItem[]>([]);
@@ -606,7 +627,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   const loadHistory = useCallback(async () => {
-    let slowTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let slowTimer: number | null = null;
     try {
       const storedRatio =
         typeof window !== "undefined" ? window.localStorage.getItem(IMAGE_RATIO_STORAGE_KEY) : null;
@@ -881,6 +902,10 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
   }, [selectedConversationId]);
 
   useEffect(() => {
+    setSelectedImageIds(new Set());
+  }, [selectedConversationId]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -1129,10 +1154,10 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
     async (conversationId: string, image: StoredImage | StoredReferenceImage) => {
       try {
         const nextReference =
-          "dataUrl" in image
+          "name" in image
             ? {
                 referenceImage: image,
-                file: dataUrlToFile(image.dataUrl, image.name, image.type),
+                file: await buildReferenceImageFile(image, `reference-${Date.now()}.png`),
               }
             : await buildReferenceImageFromStoredImage(image, `conversation-${conversationId}-${Date.now()}.png`);
         if (!nextReference) {
@@ -1172,9 +1197,18 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
     setImageQuality(turn.quality);
     setImageModel(turn.model);
     setReferenceImages(turn.referenceImages);
-    setReferenceImageFiles(
-      turn.referenceImages.map((image) => dataUrlToFile(image.dataUrl, image.name, image.type)),
-    );
+    try {
+      const files = await Promise.all(
+        turn.referenceImages
+          .filter((image) => !image.expired)
+          .map((image, index) => buildReferenceImageFile(image, `${turn.id}-${index + 1}.png`)),
+      );
+      setReferenceImageFiles(files);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "读取参考图失败";
+      toast.error(message);
+      setReferenceImageFiles([]);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -1191,6 +1225,42 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
     setLightboxIndex(Math.max(0, Math.min(index, images.length - 1)));
     setLightboxOpen(true);
   }, []);
+
+  const toggleImageSelection = useCallback((imageId: string) => {
+    setSelectedImageIds((current) => {
+      const next = new Set(current);
+      if (next.has(imageId)) {
+        next.delete(imageId);
+      } else {
+        next.add(imageId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleExportAllImages = useCallback(async () => {
+    if (!selectedConversation) {
+      return;
+    }
+    try {
+      await downloadImageConversationImages(selectedConversation.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "导出图片失败";
+      toast.error(message);
+    }
+  }, [selectedConversation]);
+
+  const handleExportSelectedImages = useCallback(async () => {
+    if (!selectedConversation || selectedImageIds.size === 0) {
+      return;
+    }
+    try {
+      await downloadImageConversationImages(selectedConversation.id, [...selectedImageIds]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "导出图片失败";
+      toast.error(message);
+    }
+  }, [selectedConversation, selectedImageIds]);
 
   const createLoadingImages = (turnId: string, count: number) =>
     Array.from({ length: count }, (_, index) => {
@@ -1250,8 +1320,10 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
       };
       try {
 
-        const referenceFiles = activeTurn.referenceImages.map((image, index) =>
-          dataUrlToFile(image.dataUrl, image.name || `${activeTurn.id}-${index + 1}.png`, image.type),
+        const referenceFiles = await Promise.all(
+          activeTurn.referenceImages
+            .filter((image) => !image.expired)
+            .map((image, index) => buildReferenceImageFile(image, `${activeTurn.id}-${index + 1}.png`)),
         );
         if (activeTurn.mode === "edit" && referenceFiles.length === 0) {
           throw new Error("未找到可用于继续编辑的参考图");
@@ -1262,8 +1334,23 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
           pendingImages.map((image) => {
             const taskId = image.taskId || image.id;
             return activeTurn.mode === "edit"
-              ? createImageEditTask(taskId, referenceFiles, activeTurn.prompt, activeTurn.model, activeTurn.size, activeTurn.quality)
-              : createImageGenerationTask(taskId, activeTurn.prompt, activeTurn.model, activeTurn.size, activeTurn.quality);
+              ? createImageEditTask(
+                  taskId,
+                  referenceFiles,
+                  activeTurn.prompt,
+                  activeTurn.model,
+                  activeTurn.size,
+                  activeTurn.quality,
+                  { conversationId, turnId: activeTurn.id, imageId: image.id },
+                )
+              : createImageGenerationTask(
+                  taskId,
+                  activeTurn.prompt,
+                  activeTurn.model,
+                  activeTurn.size,
+                  activeTurn.quality,
+                  { conversationId, turnId: activeTurn.id, imageId: image.id },
+                );
           }),
         );
         await applyTasks(submitted);
@@ -1314,8 +1401,23 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
               const resubmitted = await Promise.all(
                 missingImages.map((image) =>
                   activeTurn.mode === "edit"
-                    ? createImageEditTask(image.taskId || image.id, referenceFiles, activeTurn.prompt, activeTurn.model, activeTurn.size, activeTurn.quality)
-                    : createImageGenerationTask(image.taskId || image.id, activeTurn.prompt, activeTurn.model, activeTurn.size, activeTurn.quality),
+                    ? createImageEditTask(
+                        image.taskId || image.id,
+                        referenceFiles,
+                        activeTurn.prompt,
+                        activeTurn.model,
+                        activeTurn.size,
+                        activeTurn.quality,
+                        { conversationId, turnId: activeTurn.id, imageId: image.id },
+                      )
+                    : createImageGenerationTask(
+                        image.taskId || image.id,
+                        activeTurn.prompt,
+                        activeTurn.model,
+                        activeTurn.size,
+                        activeTurn.quality,
+                        { conversationId, turnId: activeTurn.id, imageId: image.id },
+                      ),
                 ),
               );
               if (resubmitted.length > 0) {
@@ -1739,8 +1841,12 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
             >
               <ImageResults
                 selectedConversation={selectedConversation}
+                selectedImageIds={selectedImageIds}
                 onOpenLightbox={openLightbox}
                 onContinueEdit={handleContinueEdit}
+                onToggleImageSelection={toggleImageSelection}
+                onExportAll={handleExportAllImages}
+                onExportSelected={handleExportSelectedImages}
                 onDeletePrompt={openDeletePromptConfirm}
                 onDeleteResults={openDeleteResultsConfirm}
                 onReuseTurnConfig={handleReuseTurnConfig}

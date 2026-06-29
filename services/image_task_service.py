@@ -130,6 +130,9 @@ class ImageTaskService:
         size: str | None,
         quality: str = "auto",
         base_url: str = "",
+        conversation_id: str | None = None,
+        turn_id: str | None = None,
+        image_id: str | None = None,
     ) -> dict[str, Any]:
         payload = {
             "prompt": prompt,
@@ -140,7 +143,15 @@ class ImageTaskService:
             "response_format": "url",
             "base_url": base_url,
         }
-        return self._submit(identity, client_task_id=client_task_id, mode="generate", payload=payload)
+        return self._submit(
+            identity,
+            client_task_id=client_task_id,
+            mode="generate",
+            payload=payload,
+            conversation_id=conversation_id,
+            turn_id=turn_id,
+            image_id=image_id,
+        )
 
     def submit_edit(
         self,
@@ -154,6 +165,9 @@ class ImageTaskService:
         base_url: str = "",
         images: list[tuple[bytes, str, str]] | None = None,
         masks: list[tuple[bytes, str, str]] | None = None,
+        conversation_id: str | None = None,
+        turn_id: str | None = None,
+        image_id: str | None = None,
     ) -> dict[str, Any]:
         payload = {
             "prompt": prompt,
@@ -166,7 +180,15 @@ class ImageTaskService:
             "response_format": "url",
             "base_url": base_url,
         }
-        return self._submit(identity, client_task_id=client_task_id, mode="edit", payload=payload)
+        return self._submit(
+            identity,
+            client_task_id=client_task_id,
+            mode="edit",
+            payload=payload,
+            conversation_id=conversation_id,
+            turn_id=turn_id,
+            image_id=image_id,
+        )
 
     def list_tasks(self, identity: dict[str, object], task_ids: list[str]) -> dict[str, Any]:
         owner = _owner_id(identity)
@@ -199,6 +221,9 @@ class ImageTaskService:
         client_task_id: str,
         mode: str,
         payload: dict[str, Any],
+        conversation_id: str | None = None,
+        turn_id: str | None = None,
+        image_id: str | None = None,
     ) -> dict[str, Any]:
         task_id = _clean(client_task_id)
         if not task_id:
@@ -224,6 +249,9 @@ class ImageTaskService:
                 "size": _clean(payload.get("size")),
                 "quality": _clean(payload.get("quality"), "auto"),
                 "base_url": _clean(payload.get("base_url")),
+                "conversation_id": _clean(conversation_id),
+                "turn_id": _clean(turn_id),
+                "image_id": _clean(image_id),
                 "created_at": now,
                 "updated_at": now,
                 "created_ts": time.time(),
@@ -252,6 +280,16 @@ class ImageTaskService:
     ) -> None:
         started = time.time()
         self._update_task(key, status=TASK_STATUS_RUNNING, error="")
+        with self._lock:
+            task = dict(self._tasks.get(key) or {})
+        task_context = {
+            "task_id": key.split(":", 1)[1],
+            "owner_id": _owner_id(identity),
+        }
+        for field in ("conversation_id", "turn_id", "image_id"):
+            value = _clean(task.get(field))
+            if value:
+                task_context[field] = value
         # 创建进度回调，每个步骤完成后更新任务状态
         def progress_callback(step: str) -> None:
             if step == "image_stream_resolve_start":
@@ -261,10 +299,7 @@ class ImageTaskService:
         payload_with_progress = {
             **payload,
             "progress_callback": progress_callback,
-            "task_context": {
-                "task_id": key.split(":", 1)[1],
-                "owner_id": _owner_id(identity),
-            },
+            "task_context": task_context,
         }
         try:
             handler = self.edit_handler if mode == "edit" else self.generation_handler
@@ -286,6 +321,7 @@ class ImageTaskService:
             usage = result.get("usage")
             duration_ms = int((time.time() - started) * 1000)
             self._update_task(key, status=TASK_STATUS_SUCCESS, data=data, usage=usage, error="", duration_ms=duration_ms)
+            self._record_conversation_task_result(key, identity, data)
             self._log_call(
                 identity,
                 mode,
@@ -304,6 +340,7 @@ class ImageTaskService:
             self._update_task(key, status=TASK_STATUS_ERROR, error=error_message, data=[],
                               duration_ms=duration_ms,
                               **({"conversation_id": conversation_id} if conversation_id else {}))
+            self._record_conversation_task_result(key, identity, [], error=error_message)
             self._log_call(
                 identity,
                 mode,
@@ -366,6 +403,31 @@ class ImageTaskService:
             task["updated_ts"] = time.time()
             self._save_locked()
 
+    def _record_conversation_task_result(
+        self,
+        key: str,
+        identity: dict[str, object],
+        data: list[Any],
+        *,
+        error: str = "",
+    ) -> None:
+        with self._lock:
+            task = dict(self._tasks.get(key) or {})
+        if not task.get("conversation_id") or not task.get("turn_id") or not task.get("image_id"):
+            return
+        try:
+            from services.image_conversation_service import image_conversation_service
+
+            image_conversation_service.record_task_result(
+                identity,
+                task,
+                data,
+                error=error,
+                base_url=_clean(task.get("base_url")),
+            )
+        except Exception:
+            pass
+
     def _load_locked(self) -> dict[str, dict[str, Any]]:
         if not self.path.exists():
             return {}
@@ -397,6 +459,9 @@ class ImageTaskService:
                 "size": _clean(item.get("size")),
                 "quality": _clean(item.get("quality"), "auto"),
                 "base_url": _clean(item.get("base_url")),
+                "conversation_id": _clean(item.get("conversation_id")),
+                "turn_id": _clean(item.get("turn_id")),
+                "image_id": _clean(item.get("image_id")),
                 "created_at": _clean(item.get("created_at"), _now_iso()),
                 "updated_at": _clean(item.get("updated_at"), _clean(item.get("created_at"), _now_iso())),
                 "created_ts": item.get("created_ts"),
@@ -562,6 +627,7 @@ class ImageTaskService:
                 },
             )["data"]
             self._update_task(key, status=TASK_STATUS_SUCCESS, data=data, error="", duration_ms=int((time.time() - started) * 1000))
+            self._record_conversation_task_result(key, identity, data)
             self._log_call(
                 identity,
                 mode,
@@ -575,6 +641,7 @@ class ImageTaskService:
             error_message = str(exc) or "resume poll failed"
             duration_ms = int((time.time() - started) * 1000)
             self._update_task(key, status=TASK_STATUS_ERROR, error=error_message, data=[], duration_ms=duration_ms)
+            self._record_conversation_task_result(key, identity, [], error=error_message)
             self._log_call(
                 identity,
                 mode,

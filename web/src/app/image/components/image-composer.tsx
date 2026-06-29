@@ -23,7 +23,7 @@ type ImageComposerProps = {
   imageModels: ImageModel[];
   availableQuota: string;
   activeTaskCount: number;
-  referenceImages: Array<{ name: string; dataUrl: string }>;
+  referenceImages: Array<{ name: string; dataUrl?: string; url?: string; expired?: boolean }>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   fileInputRef: RefObject<HTMLInputElement | null>;
   onPromptChange: (value: string) => void;
@@ -118,7 +118,11 @@ export function ImageComposer({
   const sizeMenuRef = useRef<HTMLDivElement>(null);
   const sizeMenuBtnRef = useRef<HTMLButtonElement>(null);
   const lightboxImages = useMemo(
-    () => referenceImages.map((image, index) => ({ id: `${image.name}-${index}`, src: image.dataUrl })),
+    () =>
+      referenceImages.flatMap((image, index) => {
+        const src = image.expired ? "" : image.dataUrl || image.url || "";
+        return src ? [{ id: `${image.name}-${index}`, src }] : [];
+      }),
     [referenceImages],
   );
   const modelOptions = useMemo(
@@ -413,17 +417,26 @@ export function ImageComposer({
                 <button
                   type="button"
                   onClick={() => {
-                    setLightboxIndex(index);
-                    setLightboxOpen(true);
+                    const lightboxIndex = lightboxImages.findIndex((item) => item.id === `${image.name}-${index}`);
+                    if (lightboxIndex >= 0) {
+                      setLightboxIndex(lightboxIndex);
+                      setLightboxOpen(true);
+                    }
                   }}
                   className="group size-14 overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 transition hover:border-stone-300 sm:size-16"
                   aria-label={`预览参考图 ${image.name || index + 1}`}
                 >
-                  <img
-                    src={image.dataUrl}
-                    alt={image.name || `参考图 ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
+                  {image.expired || !(image.dataUrl || image.url) ? (
+                    <span className="flex h-full items-center justify-center px-1 text-center text-[10px] leading-4 text-stone-500">
+                      已过期
+                    </span>
+                  ) : (
+                    <img
+                      src={image.dataUrl || image.url}
+                      alt={image.name || `参考图 ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
                 </button>
                 <button
                   type="button"

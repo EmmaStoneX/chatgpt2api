@@ -3,13 +3,18 @@
 import localforage from "localforage";
 
 import type { ImageModel } from "@/lib/api";
+import { httpRequest, request } from "@/lib/request";
 
 export type ImageConversationMode = "generate" | "edit";
 
 export type StoredReferenceImage = {
   name: string;
   type: string;
-  dataUrl: string;
+  dataUrl?: string;
+  url?: string;
+  rel?: string;
+  expiresAt?: string;
+  expired?: boolean;
 };
 
 export type StoredImage = {
@@ -20,8 +25,11 @@ export type StoredImage = {
   progress?: string;
   b64_json?: string;
   url?: string;
+  rel?: string;
   revised_prompt?: string;
   error?: string;
+  expiresAt?: string;
+  expired?: boolean;
   startTime?: number;
   elapsedSecs?: number;
   elapsedUpdatedAt?: number;
@@ -67,7 +75,7 @@ const imageConversationStorage = localforage.createInstance({
   storeName: "image_conversations",
 });
 
-const IMAGE_CONVERSATIONS_KEY = "items";
+const SERVER_IMAGE_CONVERSATIONS_CACHE_KEY = "server_items";
 let imageConversationWriteQueue: Promise<void> = Promise.resolve();
 
 function normalizeStoredImage(image: StoredImage): StoredImage {
@@ -77,7 +85,10 @@ function normalizeStoredImage(image: StoredImage): StoredImage {
     taskId: typeof image.taskId === "string" && image.taskId ? image.taskId : undefined,
     taskStatus: image.taskStatus === "queued" || image.taskStatus === "running" ? image.taskStatus : undefined,
     url: normalizedUrl,
+    rel: typeof image.rel === "string" && image.rel ? image.rel : undefined,
     revised_prompt: typeof image.revised_prompt === "string" ? image.revised_prompt : undefined,
+    expiresAt: typeof image.expiresAt === "string" ? image.expiresAt : undefined,
+    expired: image.expired === true,
     startTime: typeof image.startTime === "number" ? image.startTime : undefined,
     elapsedSecs: typeof image.elapsedSecs === "number" ? image.elapsedSecs : undefined,
     elapsedUpdatedAt: typeof image.elapsedUpdatedAt === "number" ? image.elapsedUpdatedAt : undefined,
@@ -99,7 +110,11 @@ function normalizeReferenceImage(image: StoredReferenceImage): StoredReferenceIm
   return {
     name: image.name || "reference.png",
     type: image.type || "image/png",
-    dataUrl: image.dataUrl,
+    dataUrl: typeof image.dataUrl === "string" && image.dataUrl ? image.dataUrl : undefined,
+    url: typeof image.url === "string" && image.url ? image.url : undefined,
+    rel: typeof image.rel === "string" && image.rel ? image.rel : undefined,
+    expiresAt: typeof image.expiresAt === "string" ? image.expiresAt : undefined,
+    expired: image.expired === true,
   };
 }
 
@@ -116,7 +131,10 @@ function getLegacyReferenceImages(source: Record<string, unknown>): StoredRefere
           return false;
         }
         const candidate = image as StoredReferenceImage;
-        return typeof candidate.dataUrl === "string" && candidate.dataUrl.length > 0;
+        return (
+          (typeof candidate.dataUrl === "string" && candidate.dataUrl.length > 0) ||
+          (typeof candidate.url === "string" && candidate.url.length > 0)
+        );
       })
       .map(normalizeReferenceImage);
   }
@@ -232,32 +250,56 @@ function queueImageConversationWrite<T>(operation: () => Promise<T>): Promise<T>
 async function readStoredImageConversations(): Promise<ImageConversation[]> {
   const items =
     (await imageConversationStorage.getItem<Array<ImageConversation & Record<string, unknown>>>(
-      IMAGE_CONVERSATIONS_KEY,
+      SERVER_IMAGE_CONVERSATIONS_CACHE_KEY,
     )) || [];
   return items.map(normalizeConversation);
 }
 
 export async function listImageConversations(): Promise<ImageConversation[]> {
-  return sortImageConversations(await readStoredImageConversations());
+  try {
+    const response = await httpRequest<{ items: Array<ImageConversation & Record<string, unknown>> }>(
+      "/api/image-conversations",
+    );
+    const items = sortImageConversations(response.items.map(normalizeConversation));
+    await imageConversationStorage.setItem(SERVER_IMAGE_CONVERSATIONS_CACHE_KEY, items);
+    return items;
+  } catch (error) {
+    const cached = sortImageConversations(await readStoredImageConversations());
+    if (cached.length > 0) {
+      return cached;
+    }
+    throw error;
+  }
 }
 
 export async function saveImageConversations(conversations: ImageConversation[]): Promise<void> {
   await queueImageConversationWrite(async () => {
-    const items = await readStoredImageConversations();
-    const conversationMap = new Map(items.map((item) => [item.id, item]));
     for (const conversation of conversations.map(normalizeConversation)) {
-      const current = conversationMap.get(conversation.id);
-      conversationMap.set(conversation.id, current ? pickLatestConversation(current, conversation) : conversation);
+      await upsertServerConversation(conversation);
     }
-    await imageConversationStorage.setItem(
-      IMAGE_CONVERSATIONS_KEY,
-      sortImageConversations([...conversationMap.values()]),
-    );
   });
 }
 
 export async function saveImageConversation(conversation: ImageConversation): Promise<void> {
   await queueImageConversationWrite(async () => {
+    await upsertServerConversation(normalizeConversation(conversation));
+  });
+}
+
+async function upsertServerConversation(conversation: ImageConversation): Promise<ImageConversation> {
+  const response = await httpRequest<{ item: ImageConversation & Record<string, unknown> }>(
+    `/api/image-conversations/${encodeURIComponent(conversation.id)}`,
+    {
+      method: "PUT",
+      body: conversation,
+    },
+  );
+  const saved = normalizeConversation(response.item);
+  await mergeCachedConversation(saved);
+  return saved;
+}
+
+async function mergeCachedConversation(conversation: ImageConversation): Promise<void> {
     const items = await readStoredImageConversations();
     const nextConversation = normalizeConversation(conversation);
     const current = items.find((item) => item.id === nextConversation.id);
@@ -266,29 +308,30 @@ export async function saveImageConversation(conversation: ImageConversation): Pr
       persistedConversation,
       ...items.filter((item) => item.id !== persistedConversation.id),
     ]);
-    await imageConversationStorage.setItem(IMAGE_CONVERSATIONS_KEY, nextItems);
-  });
+    await imageConversationStorage.setItem(SERVER_IMAGE_CONVERSATIONS_CACHE_KEY, nextItems);
 }
 
 export async function renameImageConversation(id: string, title: string): Promise<void> {
   await queueImageConversationWrite(async () => {
-    const items = await readStoredImageConversations();
-    const target = items.find((item) => item.id === id);
-    if (!target) return;
-    const updated = { ...target, title, updatedAt: new Date().toISOString() };
-    const nextItems = sortImageConversations([
-      updated,
-      ...items.filter((item) => item.id !== id),
-    ]);
-    await imageConversationStorage.setItem(IMAGE_CONVERSATIONS_KEY, nextItems);
+    const response = await httpRequest<{ item: ImageConversation & Record<string, unknown> }>(
+      `/api/image-conversations/${encodeURIComponent(id)}/rename`,
+      {
+        method: "PATCH",
+        body: { title },
+      },
+    );
+    await mergeCachedConversation(normalizeConversation(response.item));
   });
 }
 
 export async function deleteImageConversation(id: string): Promise<void> {
   await queueImageConversationWrite(async () => {
+    await httpRequest<{ ok: boolean }>(`/api/image-conversations/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
     const items = await readStoredImageConversations();
     await imageConversationStorage.setItem(
-      IMAGE_CONVERSATIONS_KEY,
+      SERVER_IMAGE_CONVERSATIONS_CACHE_KEY,
       items.filter((item) => item.id !== id),
     );
   });
@@ -296,8 +339,26 @@ export async function deleteImageConversation(id: string): Promise<void> {
 
 export async function clearImageConversations(): Promise<void> {
   await queueImageConversationWrite(async () => {
-    await imageConversationStorage.removeItem(IMAGE_CONVERSATIONS_KEY);
+    await httpRequest<{ ok: boolean; removed: number }>("/api/image-conversations/clear", { method: "POST" });
+    await imageConversationStorage.removeItem(SERVER_IMAGE_CONVERSATIONS_CACHE_KEY);
   });
+}
+
+export async function downloadImageConversationImages(conversationId: string, imageIds?: string[]): Promise<void> {
+  const response = await request.post(
+    `/api/image-conversations/${encodeURIComponent(conversationId)}/download`,
+    { image_ids: imageIds && imageIds.length > 0 ? imageIds : undefined },
+    { responseType: "blob" },
+  );
+  const blob = response.data as Blob;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = imageIds && imageIds.length > 0 ? "selected-images.zip" : "conversation-images.zip";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 export function getImageConversationStats(conversation: ImageConversation | null): ImageConversationStats {

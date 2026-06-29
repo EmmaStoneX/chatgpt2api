@@ -505,7 +505,20 @@ export async function editImage(files: File | File[], prompt: string, model?: Im
   );
 }
 
-export async function createImageGenerationTask(clientTaskId: string, prompt: string, model?: ImageModel, size?: string, quality = "auto") {
+type ImageTaskContext = {
+  conversationId?: string;
+  turnId?: string;
+  imageId?: string;
+};
+
+export async function createImageGenerationTask(
+  clientTaskId: string,
+  prompt: string,
+  model?: ImageModel,
+  size?: string,
+  quality = "auto",
+  context: ImageTaskContext = {},
+) {
   return httpRequest<ImageTask>("/api/image-tasks/generations", {
     method: "POST",
     body: {
@@ -514,6 +527,9 @@ export async function createImageGenerationTask(clientTaskId: string, prompt: st
       ...(model ? { model } : {}),
       ...(size ? { size } : {}),
       quality,
+      ...(context.conversationId ? { conversation_id: context.conversationId } : {}),
+      ...(context.turnId ? { turn_id: context.turnId } : {}),
+      ...(context.imageId ? { image_id: context.imageId } : {}),
     },
   });
 }
@@ -525,6 +541,7 @@ export async function createImageEditTask(
   model?: ImageModel,
   size?: string,
   quality = "auto",
+  context: ImageTaskContext = {},
 ) {
   const formData = new FormData();
   const uploadFiles = Array.isArray(files) ? files : [files];
@@ -533,6 +550,15 @@ export async function createImageEditTask(
     formData.append("image", file);
   });
   formData.append("client_task_id", clientTaskId);
+  if (context.conversationId) {
+    formData.append("conversation_id", context.conversationId);
+  }
+  if (context.turnId) {
+    formData.append("turn_id", context.turnId);
+  }
+  if (context.imageId) {
+    formData.append("image_id", context.imageId);
+  }
   formData.append("prompt", prompt);
   if (model) {
     formData.append("model", model);
