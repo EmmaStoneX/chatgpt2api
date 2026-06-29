@@ -56,22 +56,20 @@ const IMAGE_MODEL_STORAGE_KEY = "chatgpt2api:image_last_model";
 const IMAGE_COUNT_STORAGE_KEY = "chatgpt2api:image_last_count";
 const SCROLL_POSITIONS_STORAGE_KEY = "chatgpt2api:image_scroll_positions";
 const SCROLL_TO_LATEST_THRESHOLD = 160;
-const HISTORY_LOAD_TIMEOUT_MS = 8000;
+const HISTORY_LOAD_SLOW_MS = 8000;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
-    promise.then(
-      (value) => {
-        window.clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        window.clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
+async function requestPersistentImageHistoryStorage() {
+  if (typeof navigator === "undefined" || !navigator.storage?.persist) {
+    return;
+  }
+  try {
+    const alreadyPersisted = await navigator.storage.persisted?.();
+    if (!alreadyPersisted) {
+      await navigator.storage.persist();
+    }
+  } catch {
+    // Browsers may reject this silently; history loading must not depend on it.
+  }
 }
 
 function loadScrollPositions(): Map<string, number> {
@@ -239,7 +237,7 @@ function taskDataToStoredImage(image: StoredImage, task: ImageTask): StoredImage
       status: "success",
       taskStatus: undefined,
       progress: undefined,
-      b64_json: first.b64_json,
+      b64_json: first.url ? undefined : first.b64_json,
       url: first.url,
       revised_prompt: first.revised_prompt,
       error: undefined,
@@ -608,6 +606,7 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   const loadHistory = useCallback(async () => {
+    let slowTimer: ReturnType<typeof window.setTimeout> | null = null;
     try {
       const storedRatio =
         typeof window !== "undefined" ? window.localStorage.getItem(IMAGE_RATIO_STORAGE_KEY) : null;
@@ -624,16 +623,19 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
       setImageQuality(storedQuality || "auto");
       setImageCount(storedCount ? clampImageCount(storedCount) : "1");
 
-      const normalizedItems = await withTimeout(
-        (async () => {
-          const items = await listImageConversations();
-          return recoverConversationHistory(items);
-        })(),
-        HISTORY_LOAD_TIMEOUT_MS,
-        "本地会话记录读取超时，已先进入空白生图页",
-      );
+      slowTimer = window.setTimeout(() => {
+        toast.info("本地图片会话较大，仍在读取历史记录");
+      }, HISTORY_LOAD_SLOW_MS);
+
+      await requestPersistentImageHistoryStorage();
+      const items = await listImageConversations();
+      const normalizedItems = await recoverConversationHistory(items);
       if (loadCancelledRef.current) {
         return;
+      }
+      if (slowTimer) {
+        window.clearTimeout(slowTimer);
+        slowTimer = null;
       }
 
       conversationsRef.current = normalizedItems;
@@ -645,10 +647,16 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
           ? storedConversationId
           : null) ?? pickFallbackConversationId(normalizedItems);
       setSelectedConversationId(nextSelectedConversationId);
+      void saveImageConversations(normalizedItems).catch(() => {
+        // Compaction is best-effort; normal per-conversation saves still report errors.
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "读取会话记录失败";
       toast.error(message);
     } finally {
+      if (slowTimer) {
+        window.clearTimeout(slowTimer);
+      }
       if (!loadCancelledRef.current) {
         setIsLoadingHistory(false);
       }

@@ -71,17 +71,21 @@ const IMAGE_CONVERSATIONS_KEY = "items";
 let imageConversationWriteQueue: Promise<void> = Promise.resolve();
 
 function normalizeStoredImage(image: StoredImage): StoredImage {
+  const normalizedUrl = typeof image.url === "string" && image.url ? image.url : undefined;
   const normalized = {
     ...image,
     taskId: typeof image.taskId === "string" && image.taskId ? image.taskId : undefined,
     taskStatus: image.taskStatus === "queued" || image.taskStatus === "running" ? image.taskStatus : undefined,
-    url: typeof image.url === "string" && image.url ? image.url : undefined,
+    url: normalizedUrl,
     revised_prompt: typeof image.revised_prompt === "string" ? image.revised_prompt : undefined,
     startTime: typeof image.startTime === "number" ? image.startTime : undefined,
     elapsedSecs: typeof image.elapsedSecs === "number" ? image.elapsedSecs : undefined,
     elapsedUpdatedAt: typeof image.elapsedUpdatedAt === "number" ? image.elapsedUpdatedAt : undefined,
     durationMs: typeof image.durationMs === "number" ? image.durationMs : undefined,
   };
+  if (normalizedUrl && normalized.b64_json) {
+    delete normalized.b64_json;
+  }
   if (image.status === "loading" || image.status === "error" || image.status === "success") {
     return normalized;
   }
