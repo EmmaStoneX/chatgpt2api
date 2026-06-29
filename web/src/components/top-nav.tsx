@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Menu } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -139,7 +138,7 @@ export function TopNav() {
                     );
                     return (
                       <SheetClose asChild key={item.href}>
-                        <Link href={item.href} className={className}>{item.label}</Link>
+                        <a href={item.href} className={className}>{item.label}</a>
                       </SheetClose>
                     );
                   })}
@@ -155,12 +154,12 @@ export function TopNav() {
                 </SheetFooter>
               </SheetContent>
             </Sheet>
-            <Link
+            <a
               href="/image"
               className="shrink-0 py-1 text-[15px] font-bold tracking-tight text-stone-950 transition hover:text-stone-700 dark:text-stone-50 dark:hover:text-white"
             >
               chatgpt2api
-            </Link>
+            </a>
             <HeaderActions className="ml-auto sm:hidden" showGithubText={false} />
           </div>
           <nav className="hide-scrollbar -mx-1 hidden min-w-0 flex-1 gap-1 overflow-x-auto px-1 sm:mx-0 sm:flex sm:justify-center sm:gap-8 sm:overflow-visible sm:px-0">
@@ -176,7 +175,7 @@ export function TopNav() {
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (
-                <Link
+                <a
                   key={item.href}
                   href={item.href}
                   className={cn(
@@ -188,7 +187,7 @@ export function TopNav() {
                 >
                   {item.label}
                   {active ? <span className="absolute inset-x-0 -bottom-[1px] hidden h-0.5 bg-stone-950 dark:bg-white sm:block" /> : null}
-                </Link>
+                </a>
               );
             })}
           </nav>

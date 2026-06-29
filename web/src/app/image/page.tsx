@@ -56,6 +56,23 @@ const IMAGE_MODEL_STORAGE_KEY = "chatgpt2api:image_last_model";
 const IMAGE_COUNT_STORAGE_KEY = "chatgpt2api:image_last_count";
 const SCROLL_POSITIONS_STORAGE_KEY = "chatgpt2api:image_scroll_positions";
 const SCROLL_TO_LATEST_THRESHOLD = 160;
+const HISTORY_LOAD_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 function loadScrollPositions(): Map<string, number> {
   if (typeof window === "undefined") return new Map();
@@ -607,8 +624,14 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
       setImageQuality(storedQuality || "auto");
       setImageCount(storedCount ? clampImageCount(storedCount) : "1");
 
-      const items = await listImageConversations();
-      const normalizedItems = await recoverConversationHistory(items);
+      const normalizedItems = await withTimeout(
+        (async () => {
+          const items = await listImageConversations();
+          return recoverConversationHistory(items);
+        })(),
+        HISTORY_LOAD_TIMEOUT_MS,
+        "本地会话记录读取超时，已先进入空白生图页",
+      );
       if (loadCancelledRef.current) {
         return;
       }
@@ -1189,8 +1212,9 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
       }
 
       activeConversationQueueIds.add(conversationId);
-      const applyTasks = async (tasks: ImageTask[]) => {
+      const applyTasks = async (tasks: ImageTask[], options: { persist?: boolean } = {}) => {
         const taskMap = new Map(tasks.map((task) => [task.id, task]));
+        const hasTerminalTask = tasks.some((task) => task.status === "success" || task.status === "error");
         await updateConversation(conversationId, (current) => {
           const conversation = current ?? snapshot;
           const turns = conversation.turns.map((turn) => {
@@ -1214,9 +1238,8 @@ function ImagePageContent({ isAdmin }: { isAdmin: boolean }) {
             updatedAt: new Date().toISOString(),
             turns,
           };
-        });
+        }, { persist: options.persist ?? hasTerminalTask });
       };
-
       try {
 
         const referenceFiles = activeTurn.referenceImages.map((image, index) =>
