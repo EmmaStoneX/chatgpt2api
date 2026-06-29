@@ -9,17 +9,30 @@ type WheelTargetRef = React.RefObject<HTMLElement | null>;
 const WHEEL_DELTA_LINE = 1;
 const WHEEL_DELTA_PAGE = 2;
 const WHEEL_LINE_HEIGHT = 40;
+const WHEEL_ROUTED_FLAG = "__chatgpt2apiWheelRouted";
 
-function getWheelDeltaY(event: React.WheelEvent<HTMLElement>, scrollTarget: HTMLElement) {
-  if (event.deltaMode === WHEEL_DELTA_LINE) {
-    return event.deltaY * WHEEL_LINE_HEIGHT;
+type WheelEventLike = {
+  deltaY: number;
+  deltaMode: number;
+  defaultPrevented: boolean;
+  target: EventTarget | null;
+  preventDefault: () => void;
+};
+
+type RoutedWheelEvent = WheelEventLike & {
+  [WHEEL_ROUTED_FLAG]?: boolean;
+};
+
+function getWheelDeltaY(deltaY: number, deltaMode: number, scrollTarget: HTMLElement) {
+  if (deltaMode === WHEEL_DELTA_LINE) {
+    return deltaY * WHEEL_LINE_HEIGHT;
   }
 
-  if (event.deltaMode === WHEEL_DELTA_PAGE) {
-    return event.deltaY * scrollTarget.clientHeight;
+  if (deltaMode === WHEEL_DELTA_PAGE) {
+    return deltaY * scrollTarget.clientHeight;
   }
 
-  return event.deltaY;
+  return deltaY;
 }
 
 function canScrollY(element: HTMLElement, deltaY: number) {
@@ -56,34 +69,63 @@ function findScrollableAncestor(target: Element | null, boundary: HTMLElement, d
   return null;
 }
 
+function routeWheelToTarget(event: WheelEventLike, boundary: HTMLElement, scrollTarget: HTMLElement | null) {
+  const routedEvent = event as RoutedWheelEvent;
+  if (routedEvent[WHEEL_ROUTED_FLAG] || !scrollTarget || event.defaultPrevented || event.deltaY === 0) {
+    return false;
+  }
+
+  const deltaY = getWheelDeltaY(event.deltaY, event.deltaMode, scrollTarget);
+  if (deltaY === 0) {
+    return false;
+  }
+
+  const target = event.target instanceof Element ? event.target : null;
+  if (findScrollableAncestor(target, boundary, deltaY)) {
+    return false;
+  }
+
+  if (!canScrollY(scrollTarget, deltaY)) {
+    return false;
+  }
+
+  event.preventDefault();
+  routedEvent[WHEEL_ROUTED_FLAG] = true;
+  scrollTarget.scrollBy({ top: deltaY, behavior: "auto" });
+  return true;
+}
+
 function useWheelFallback(targetRef?: WheelTargetRef) {
   return React.useCallback(
     (event: React.WheelEvent<HTMLElement>) => {
-      const scrollTarget = targetRef?.current;
-      if (!scrollTarget || event.defaultPrevented || event.deltaY === 0) {
+      const nativeEvent = event.nativeEvent as RoutedWheelEvent;
+      if (nativeEvent[WHEEL_ROUTED_FLAG]) {
         return;
       }
-
-      const deltaY = getWheelDeltaY(event, scrollTarget);
-      if (deltaY === 0) {
-        return;
+      if (routeWheelToTarget(event, event.currentTarget, targetRef?.current ?? null)) {
+        nativeEvent[WHEEL_ROUTED_FLAG] = true;
       }
-
-      const boundary = event.currentTarget;
-      const target = event.target instanceof Element ? event.target : null;
-      if (findScrollableAncestor(target, boundary, deltaY)) {
-        return;
-      }
-
-      if (!canScrollY(scrollTarget, deltaY)) {
-        return;
-      }
-
-      event.preventDefault();
-      scrollTarget.scrollBy({ top: deltaY, behavior: "auto" });
     },
     [targetRef],
   );
+}
+
+function useNativeWheelFallback(containerRef: React.RefObject<HTMLElement | null>, targetRef?: WheelTargetRef) {
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !targetRef) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      routeWheelToTarget(event, container, targetRef.current);
+    };
+
+    container.addEventListener("wheel", handleWheel, { capture: true, passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel, { capture: true });
+    };
+  }, [containerRef, targetRef]);
 }
 
 export function PageShell({
@@ -107,10 +149,13 @@ export function PageViewportShell({
 }: React.ComponentProps<"section"> & {
   wheelTargetRef?: WheelTargetRef;
 }) {
+  const containerRef = React.useRef<HTMLElement | null>(null);
   const handleWheelCapture = useWheelFallback(wheelTargetRef);
+  useNativeWheelFallback(containerRef, wheelTargetRef);
 
   return (
     <section
+      ref={containerRef}
       className={cn("min-h-0 min-w-0", className)}
       onWheelCapture={(event) => {
         onWheelCapture?.(event);
