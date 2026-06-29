@@ -6,6 +6,22 @@ import { cn } from "@/lib/utils";
 
 type WheelTargetRef = React.RefObject<HTMLElement | null>;
 
+const WHEEL_DELTA_LINE = 1;
+const WHEEL_DELTA_PAGE = 2;
+const WHEEL_LINE_HEIGHT = 40;
+
+function getWheelDeltaY(event: React.WheelEvent<HTMLElement>, scrollTarget: HTMLElement) {
+  if (event.deltaMode === WHEEL_DELTA_LINE) {
+    return event.deltaY * WHEEL_LINE_HEIGHT;
+  }
+
+  if (event.deltaMode === WHEEL_DELTA_PAGE) {
+    return event.deltaY * scrollTarget.clientHeight;
+  }
+
+  return event.deltaY;
+}
+
 function canScrollY(element: HTMLElement, deltaY: number) {
   if (element.scrollHeight <= element.clientHeight + 1) {
     return false;
@@ -48,18 +64,23 @@ function useWheelFallback(targetRef?: WheelTargetRef) {
         return;
       }
 
-      const boundary = event.currentTarget;
-      const target = event.target instanceof Element ? event.target : null;
-      if (findScrollableAncestor(target, boundary, event.deltaY)) {
+      const deltaY = getWheelDeltaY(event, scrollTarget);
+      if (deltaY === 0) {
         return;
       }
 
-      if (!canScrollY(scrollTarget, event.deltaY)) {
+      const boundary = event.currentTarget;
+      const target = event.target instanceof Element ? event.target : null;
+      if (findScrollableAncestor(target, boundary, deltaY)) {
+        return;
+      }
+
+      if (!canScrollY(scrollTarget, deltaY)) {
         return;
       }
 
       event.preventDefault();
-      scrollTarget.scrollBy({ top: event.deltaY, behavior: "auto" });
+      scrollTarget.scrollBy({ top: deltaY, behavior: "auto" });
     },
     [targetRef],
   );
