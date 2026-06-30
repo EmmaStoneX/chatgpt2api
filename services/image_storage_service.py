@@ -194,7 +194,7 @@ class ImageStorageService:
         public_base_url = _clean(settings.get("public_base_url"))
         if public_base_url:
             return f"{public_base_url.rstrip('/')}/{_safe_relative_path(rel)}"
-        return f"{(base_url or config.base_url).rstrip('/')}/images/{_safe_relative_path(rel)}"
+        return f"/images/{_safe_relative_path(rel)}"
 
     def make_relative_path(self, image_data: bytes) -> str:
         file_hash = hashlib.md5(image_data).hexdigest()
