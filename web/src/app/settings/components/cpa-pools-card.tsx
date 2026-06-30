@@ -5,6 +5,7 @@ import { Import, LoaderCircle, Pencil, Plus, ServerCog, Trash2 } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatBeijingDateTime } from "@/lib/utils";
 
 import { useSettingsStore } from "../store";
 
@@ -121,7 +122,7 @@ export function CPAPoolsCard() {
                               状态 {importJob.status}，已处理 {importJob.completed}/{importJob.total}
                             </div>
                             <div className="truncate text-xs text-stone-400">
-                              任务 {importJob.job_id.slice(0, 8)} · {importJob.created_at}
+                              任务 {importJob.job_id.slice(0, 8)} · {formatBeijingDateTime(importJob.created_at)}
                             </div>
                           </div>
                           <Badge

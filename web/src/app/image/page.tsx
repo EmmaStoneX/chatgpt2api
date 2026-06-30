@@ -31,6 +31,7 @@ import {
   type ImageTask,
 } from "@/lib/api";
 import { useAuthGuard } from "@/lib/use-auth-guard";
+import { formatBeijingDateTime } from "@/lib/utils";
 import { useSettingsStore } from "@/app/settings/store";
 import {
   clearImageConversations,
@@ -120,16 +121,7 @@ function buildConversationTitle(prompt: string) {
 }
 
 function formatConversationTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return formatBeijingDateTime(value, { short: true });
 }
 
 function formatAvailableQuota(accounts: Account[]) {

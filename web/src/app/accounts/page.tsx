@@ -60,7 +60,7 @@ import {
   type RefreshProgressResponse,
 } from "@/lib/api";
 import { useAuthGuard } from "@/lib/use-auth-guard";
-import { cn } from "@/lib/utils";
+import { cn, formatBeijingDateTime } from "@/lib/utils";
 
 import { AccountImportDialog } from "./components/account-import-dialog";
 
@@ -135,10 +135,7 @@ function formatRestoreAt(value?: string | null) {
   const hours = totalHours % 24;
   const relative = diffMs > 0 ? `剩余 ${days}d ${hours}h` : "已到恢复时间";
 
-  const pad = (num: number) => String(num).padStart(2, "0");
-  const absolute = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  const absolute = formatBeijingDateTime(value, { seconds: true });
 
   return { absolute, relative };
 }
@@ -1161,15 +1158,7 @@ function AccountsPageContent() {
                           <div className="text-xs leading-5 text-stone-500">{account.email ?? "—"}</div>
                         </td>
                         <td className="px-4 py-3 text-xs leading-5 text-stone-500">
-                          {(() => {
-                            const raw = (account as any).created_at;
-                            if (!raw) return "—";
-                            try {
-                              const d = new Date(raw + "Z");
-                              if (isNaN(d.getTime())) return String(raw).slice(0, 10);
-                              return d.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-                            } catch { return String(raw).slice(0, 10); }
-                          })()}
+                          {formatBeijingDateTime((account as any).created_at, { short: true })}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant="info">
