@@ -1158,7 +1158,7 @@ function AccountsPageContent() {
                           <div className="text-xs leading-5 text-stone-500">{account.email ?? "—"}</div>
                         </td>
                         <td className="px-4 py-3 text-xs leading-5 text-stone-500">
-                          {formatBeijingDateTime((account as any).created_at, { short: true })}
+                          {formatBeijingDateTime((account as any).created_at, { short: true, sourceTimeZone: "utc" })}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant="info">

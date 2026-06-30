@@ -5,16 +5,28 @@ const BEIJING_TIME_ZONE = "Asia/Shanghai";
 const TIME_ZONE_PATTERN = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 const DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
 
-function parseDateTime(value: string | number | Date) {
-  if (value instanceof Date || typeof value === "number") {
+type BeijingTimeOptions = {
+  seconds?: boolean;
+  short?: boolean;
+  sourceTimeZone?: "beijing" | "utc";
+};
+
+function parseDateTime(value: string | number | Date, options?: Pick<BeijingTimeOptions, "sourceTimeZone">) {
+  if (value instanceof Date) {
     return new Date(value);
+  }
+  if (typeof value === "number") {
+    return new Date(Math.abs(value) < 1_000_000_000_000 ? value * 1000 : value);
   }
   const raw = value.trim();
   if (!raw) {
     return null;
   }
+  if (/^\d{10}(?:\.\d+)?$/.test(raw) || /^\d{13}$/.test(raw)) {
+    return parseDateTime(Number(raw), options);
+  }
   const normalized = DATE_TIME_PATTERN.test(raw) && !TIME_ZONE_PATTERN.test(raw)
-    ? `${raw.replace(" ", "T")}Z`
+    ? `${raw.replace(" ", "T")}${options?.sourceTimeZone === "utc" ? "Z" : "+08:00"}`
     : raw;
   return new Date(normalized);
 }
@@ -42,11 +54,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatBeijingDateTime(value?: string | number | Date | null, options?: { seconds?: boolean; short?: boolean }) {
+export function getBeijingTimestamp(value?: string | number | Date | null, options?: Pick<BeijingTimeOptions, "sourceTimeZone">) {
+  if (value === undefined || value === null || value === "") {
+    return 0;
+  }
+  const date = parseDateTime(value, options);
+  return date && Number.isFinite(date.getTime()) ? date.getTime() : 0;
+}
+
+export function formatBeijingDateTime(value?: string | number | Date | null, options?: BeijingTimeOptions) {
   if (value === undefined || value === null || value === "") {
     return "—";
   }
-  const date = parseDateTime(value);
+  const date = parseDateTime(value, options);
   if (!date || Number.isNaN(date.getTime())) {
     return String(value);
   }
@@ -62,11 +82,11 @@ export function formatBeijingDateTime(value?: string | number | Date | null, opt
   }).format(date);
 }
 
-export function formatBeijingTime(value?: string | number | Date | null) {
+export function formatBeijingTime(value?: string | number | Date | null, options?: Pick<BeijingTimeOptions, "sourceTimeZone">) {
   if (value === undefined || value === null || value === "") {
     return "—";
   }
-  const date = parseDateTime(value);
+  const date = parseDateTime(value, options);
   if (!date || Number.isNaN(date.getTime())) {
     return String(value);
   }

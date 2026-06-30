@@ -78,7 +78,7 @@ class AccountService:
 
     @staticmethod
     def _now() -> str:
-        return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     @staticmethod
     def _decode_jwt_payload(token: str) -> dict:

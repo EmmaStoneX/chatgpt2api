@@ -4,7 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { Clock3, Download, EyeOff, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn, normalizeImageAssetUrl } from "@/lib/utils";
+import { cn, getBeijingTimestamp, normalizeImageAssetUrl } from "@/lib/utils";
 import type { ImageConversation, ImageTurnStatus, StoredImage, StoredReferenceImage } from "@/store/image-conversations";
 
 export type ImageLightboxItem = {
@@ -579,8 +579,8 @@ function formatImageExpiry(image: StoredImage): string {
   if (!image.expiresAt) {
     return "";
   }
-  const expiresAt = new Date(image.expiresAt).getTime();
-  if (!Number.isFinite(expiresAt)) {
+  const expiresAt = getBeijingTimestamp(image.expiresAt);
+  if (!expiresAt) {
     return "";
   }
   const diffMs = expiresAt - Date.now();
