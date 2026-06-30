@@ -4,7 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { Clock3, Download, EyeOff, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, normalizeImageAssetUrl } from "@/lib/utils";
 import type { ImageConversation, ImageTurnStatus, StoredImage, StoredReferenceImage } from "@/store/image-conversations";
 
 export type ImageLightboxItem = {
@@ -35,27 +35,6 @@ type ImageResultsProps = {
 // Blob URL 缓存：避免 base64 超长字符串在 DOM 中，改用短小的 blob: URL
 const b64BlobUrlCache = new Map<string, string>();
 
-function normalizeStoredImageUrl(url: string) {
-  const value = String(url || "").trim();
-  if (!value || typeof window === "undefined") {
-    return value;
-  }
-  try {
-    const parsed = new URL(value, window.location.origin);
-    const sameHost = parsed.hostname === window.location.hostname;
-    const missingPort = !parsed.port && Boolean(window.location.port);
-    if (sameHost && missingPort && parsed.pathname.startsWith("/images/")) {
-      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
-    }
-    if (sameHost && missingPort && parsed.pathname.startsWith("/image-thumbnails/")) {
-      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
-    }
-  } catch {
-    return value;
-  }
-  return value;
-}
-
 function getStoredImageSrc(image: StoredImage) {
   if (image.expired) {
     return "";
@@ -72,14 +51,14 @@ function getStoredImageSrc(image: StoredImage) {
     }
     return url;
   }
-  return normalizeStoredImageUrl(image.url || "");
+  return normalizeImageAssetUrl(image.url || "");
 }
 
 function getReferenceImageSrc(image: StoredReferenceImage) {
   if (image.expired) {
     return "";
   }
-  return image.dataUrl || normalizeStoredImageUrl(image.url || "");
+  return image.dataUrl || normalizeImageAssetUrl(image.url || "");
 }
 
 async function downloadStoredImage(image: StoredImage, index: number) {
@@ -92,7 +71,7 @@ async function downloadStoredImage(image: StoredImage, index: number) {
       blob = new Blob([bytes], { type: "image/png" });
     } else if (image.url) {
       // 确保 URL 是绝对路径
-      const normalizedUrl = normalizeStoredImageUrl(image.url);
+      const normalizedUrl = normalizeImageAssetUrl(image.url);
       const url = normalizedUrl.startsWith("http") ? normalizedUrl : `${window.location.origin}${normalizedUrl}`;
       const res = await fetch(url);
       if (!res.ok) {
@@ -106,7 +85,7 @@ async function downloadStoredImage(image: StoredImage, index: number) {
     console.error("Failed to download image:", err);
     // 如果 fetch 失败，尝试直接在新窗口打开
     if (image.url) {
-      window.open(image.url, "_blank");
+      window.open(normalizeImageAssetUrl(image.url), "_blank");
     }
     return;
   }

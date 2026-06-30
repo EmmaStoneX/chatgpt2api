@@ -593,7 +593,7 @@ class ImageConversationService:
             "task_status": _clean(image.get("taskStatus")) or None,
             "progress": _clean(image.get("progress")) or None,
             "rel": rel or None,
-            "url": url or _clean(image.get("url")) or None,
+            "url": (_public_url(rel, base_url) if rel else _clean(image.get("url"))) or None,
             "revised_prompt": _clean(image.get("revised_prompt")) or None,
             "error": _clean(image.get("error")) or None,
             "start_time": image.get("startTime") if isinstance(image.get("startTime"), (int, float)) else None,
@@ -647,7 +647,7 @@ class ImageConversationService:
             "name": _clean(ref.get("name"), f"reference-{index + 1}.png"),
             "type": _clean(ref.get("type"), _data_url_mime_type(_clean(ref.get("dataUrl")))),
             "rel": rel or None,
-            "url": url or (_public_url(rel, base_url) if rel else None),
+            "url": (_public_url(rel, base_url) if rel else url) or None,
             "created_at": created_at,
             "expires_at": expires_at,
             "expired_at": expired_at or (_now_iso() if expired else None),
@@ -667,7 +667,7 @@ class ImageConversationService:
                 rel = rel or _clean(item.get("rel")) or _clean(item.get("path"))
                 url = url or _clean(item.get("url"))
                 created_at = created_at or _clean(item.get("created_at"))
-        if rel and not url:
+        if rel:
             url = _public_url(rel, base_url)
         return rel, url, created_at
 
@@ -718,7 +718,7 @@ class ImageConversationService:
     def _serialize_image(self, row: sqlite3.Row, base_url: str) -> dict[str, object]:
         expired = bool(row["expired_at"])
         rel = _clean(row["rel"])
-        url = "" if expired else (_clean(row["url"]) or (_public_url(rel, base_url) if rel else ""))
+        url = "" if expired else ((_public_url(rel, base_url) if rel else _clean(row["url"])))
         item: dict[str, object] = {
             "id": row["id"],
             "status": row["status"],
@@ -744,7 +744,7 @@ class ImageConversationService:
     def _serialize_reference(self, row: sqlite3.Row, base_url: str) -> dict[str, object]:
         expired = bool(row["expired_at"])
         rel = _clean(row["rel"])
-        url = "" if expired else (_clean(row["url"]) or (_public_url(rel, base_url) if rel else ""))
+        url = "" if expired else ((_public_url(rel, base_url) if rel else _clean(row["url"])))
         return {
             "name": row["name"],
             "type": row["type"],

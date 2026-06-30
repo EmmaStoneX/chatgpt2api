@@ -19,6 +19,25 @@ function parseDateTime(value: string | number | Date) {
   return new Date(normalized);
 }
 
+export function normalizeImageAssetUrl(url: string) {
+  const value = String(url || "").trim();
+  if (!value || typeof window === "undefined") {
+    return value;
+  }
+  try {
+    const parsed = new URL(value, window.location.origin);
+    const isLocalHost = ["127.0.0.1", "localhost", "0.0.0.0"].includes(parsed.hostname);
+    const sameHost = parsed.hostname === window.location.hostname;
+    const isImagePath = parsed.pathname.startsWith("/images/") || parsed.pathname.startsWith("/image-thumbnails/");
+    if (isImagePath && (isLocalHost || sameHost)) {
+      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch {
+    return value;
+  }
+  return value;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

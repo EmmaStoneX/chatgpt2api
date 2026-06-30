@@ -31,7 +31,7 @@ import {
   type ImageTask,
 } from "@/lib/api";
 import { useAuthGuard } from "@/lib/use-auth-guard";
-import { formatBeijingDateTime } from "@/lib/utils";
+import { formatBeijingDateTime, normalizeImageAssetUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/app/settings/store";
 import {
   clearImageConversations,
@@ -180,8 +180,8 @@ function buildReferenceImageFromResult(image: StoredImage, fileName: string): St
 }
 
 async function fetchImageAsFile(url: string, fileName: string) {
-  const normalizedUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-  const response = await fetch(normalizedUrl);
+  const normalizedUrl = normalizeImageAssetUrl(url);
+  const response = await fetch(normalizedUrl.startsWith("http") ? normalizedUrl : `${window.location.origin}${normalizedUrl}`);
   if (!response.ok) {
     throw new Error("读取结果图失败");
   }

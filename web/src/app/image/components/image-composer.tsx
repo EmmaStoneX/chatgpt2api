@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import type { ImageModel } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, normalizeImageAssetUrl } from "@/lib/utils";
 
 type ImageComposerProps = {
   prompt: string;
@@ -120,7 +120,7 @@ export function ImageComposer({
   const lightboxImages = useMemo(
     () =>
       referenceImages.flatMap((image, index) => {
-        const src = image.expired ? "" : image.dataUrl || image.url || "";
+        const src = image.expired ? "" : image.dataUrl || normalizeImageAssetUrl(image.url || "");
         return src ? [{ id: `${image.name}-${index}`, src }] : [];
       }),
     [referenceImages],
@@ -432,7 +432,7 @@ export function ImageComposer({
                     </span>
                   ) : (
                     <img
-                      src={image.dataUrl || image.url}
+                      src={image.dataUrl || normalizeImageAssetUrl(image.url || "")}
                       alt={image.name || `参考图 ${index + 1}`}
                       className="h-full w-full object-cover"
                     />
