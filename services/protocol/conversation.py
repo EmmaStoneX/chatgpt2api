@@ -15,6 +15,7 @@ from services.config import config
 from services.image_storage_service import image_storage_service
 from services.openai_backend_api import ImageContentPolicyError, ImagePollTimeoutError, OpenAIBackendAPI
 from utils.helper import (
+    IMAGE_MODEL_PLAN_TYPES,
     IMAGE_MODELS,
     extract_image_from_message_content,
     is_codex_image_model,
@@ -1249,11 +1250,17 @@ def _generate_single_image(
                 request.progress_callback("getting_account")
             plan_type, _ = split_image_model(request.model)
             codex_model = is_codex_image_model(request.model)
-            token = account_service.get_available_access_token(
-                plan_type=plan_type,
-                source_type="codex" if codex_model else None,
-                plan_types=("plus", "team", "pro") if codex_model and not plan_type else None,
-            )
+            if codex_model:
+                token = account_service.get_available_access_token(
+                    plan_type=plan_type,
+                    source_type="codex",
+                    plan_types=IMAGE_MODEL_PLAN_TYPES if not plan_type else None,
+                )
+            else:
+                token = account_service.get_available_access_token_preferring_plan_types(
+                    preferred_plan_types=IMAGE_MODEL_PLAN_TYPES,
+                    wait_secs=config.image_paid_account_wait_secs,
+                )
         except RuntimeError as exc:
             raise ImageGenerationError(str(exc) or "image generation failed", account_email=account_email) from exc
 

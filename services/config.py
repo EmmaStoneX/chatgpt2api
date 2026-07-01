@@ -424,6 +424,13 @@ class ConfigStore:
             return 3
 
     @property
+    def image_paid_account_wait_secs(self) -> float:
+        try:
+            return max(0.0, float(self.data.get("image_paid_account_wait_secs", 5)))
+        except (TypeError, ValueError):
+            return 5.0
+
+    @property
     def image_parallel_generation(self) -> bool:
         value = self.data.get("image_parallel_generation", True)
         if isinstance(value, str):
@@ -547,6 +554,7 @@ class ConfigStore:
         data["image_poll_interval_secs"] = self.image_poll_interval_secs
         data["image_poll_initial_wait_secs"] = self.image_poll_initial_wait_secs
         data["image_account_concurrency"] = self.image_account_concurrency
+        data["image_paid_account_wait_secs"] = self.image_paid_account_wait_secs
         data["image_parallel_generation"] = self.image_parallel_generation
         data["auto_remove_invalid_accounts"] = self.auto_remove_invalid_accounts
         data["auto_remove_rate_limited_accounts"] = self.auto_remove_rate_limited_accounts

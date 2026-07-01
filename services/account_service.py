@@ -1000,6 +1000,56 @@ class AccountService:
             if plan_type or source_type else f"no available image quota (tried {len(attempted_tokens)} tokens)"
         )
 
+    def get_available_access_token_preferring_plan_types(
+            self,
+            preferred_plan_types: tuple[str, ...],
+            wait_secs: float = 0.0,
+            source_type: str | None = None,
+    ) -> str:
+        """优先从 preferred_plan_types（如 plus/team/pro）账号中选号。
+
+        号池里没有这些等级的账号时，直接走不限等级逻辑（不引入等待）；
+        号池里有但暂时都不可用（并发已满/临时无配额）时，等待 wait_secs 后降级为不限等级。
+
+        注意：不能直接把等待逻辑委托给 get_available_access_token(plan_types=...)——
+        当偏好等级账号"存在但暂时全忙"时，其内部的 _acquire_next_candidate_token 会
+        通过 Condition 无限期等待空闲槽位（没有超时退出路径），不会抛出异常。
+        因此这里改为先用非阻塞方式探测是否有空闲槽位，自行控制等待的截止时间。
+        """
+        with self._lock:
+            has_preferred = any(
+                self._account_matches_any_plan_type(item, preferred_plan_types)
+                and self._account_matches_source_type(item, source_type)
+                for item in self._accounts.values()
+            )
+        if not has_preferred:
+            return self.get_available_access_token(source_type=source_type)
+
+        deadline = time.monotonic() + max(0.0, wait_secs)
+        while True:
+            with self._image_slot_condition:
+                available_now = bool(
+                    self._list_available_candidate_tokens(plan_types=preferred_plan_types, source_type=source_type)
+                )
+                if not available_now:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    self._image_slot_condition.wait(timeout=min(0.2, remaining))
+                    continue
+            try:
+                return self.get_available_access_token(
+                    plan_types=preferred_plan_types, source_type=source_type
+                )
+            except RuntimeError:
+                break
+        log_service.add(
+            LOG_TYPE_ACCOUNT,
+            "生图未等到可用的付费账号，降级使用普通账号",
+            {"preferred_plan_types": list(preferred_plan_types)},
+        )
+        return self.get_available_access_token(source_type=source_type)
+
     def get_text_access_token(self, excluded_tokens: set[str] | None = None) -> str:
         excluded = set(excluded_tokens or set())
         with self._lock:

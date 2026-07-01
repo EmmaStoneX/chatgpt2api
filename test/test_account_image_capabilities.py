@@ -2,18 +2,50 @@ from __future__ import annotations
 
 import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from threading import Thread
 from unittest.mock import patch
 
 os.environ.setdefault("CHATGPT2API_AUTH_KEY", "test-auth")
 
 from services.account_service import AccountService
+from services.account_service import account_service as global_account_service
 from services.auth_service import AuthService
 from services.config import config
-from services.openai_backend_api import InvalidAccessTokenError
+from services.openai_backend_api import InvalidAccessTokenError, OpenAIBackendAPI
 from services.storage.json_storage import JSONStorageBackend
 from utils.helper import anonymize_token, split_image_model
+
+
+class ImageModelSlugTests(unittest.TestCase):
+    def test_uses_account_default_model_slug_when_present(self) -> None:
+        with patch.object(
+                global_account_service, "get_account",
+                return_value={"default_model_slug": "gpt-5-5-thinking"},
+        ):
+            self.assertEqual(
+                OpenAIBackendAPI(access_token="t1")._image_model_slug("gpt-image-2"),
+                "gpt-5-5-thinking",
+            )
+
+    def test_falls_back_to_auto_without_default_model_slug(self) -> None:
+        with patch.object(global_account_service, "get_account", return_value={}):
+            self.assertEqual(
+                OpenAIBackendAPI(access_token="t2")._image_model_slug("gpt-image-2"),
+                "auto",
+            )
+
+    def test_codex_branch_is_unaffected(self) -> None:
+        with patch.object(
+                global_account_service, "get_account",
+                return_value={"default_model_slug": "gpt-5-5-thinking"},
+        ):
+            self.assertEqual(
+                OpenAIBackendAPI(access_token="t1")._image_model_slug("codex-gpt-image-2"),
+                "codex-gpt-image-2",
+            )
 
 
 class AccountCapabilityTests(unittest.TestCase):
@@ -96,6 +128,103 @@ class AccountCapabilityTests(unittest.TestCase):
 
             self.assertEqual(plus_token, "token-plus")
             self.assertEqual(pro_token, "token-pro")
+
+    def test_prefers_plan_type_returns_immediately_when_no_preferred_account_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            service = AccountService(JSONStorageBackend(Path(tmp_dir) / "accounts.json"))
+            service.add_account_items([
+                {"access_token": "token-free", "type": "free", "status": "正常", "quota": 3},
+            ])
+            service.fetch_remote_info = lambda access_token, event="fetch_remote_info": service.get_account(access_token)
+
+            start = time.monotonic()
+            token = service.get_available_access_token_preferring_plan_types(
+                preferred_plan_types=("plus", "team", "pro"), wait_secs=5.0,
+            )
+            elapsed = time.monotonic() - start
+
+            self.assertEqual(token, "token-free")
+            self.assertLess(elapsed, 1.0)
+
+    def test_prefers_plan_type_picks_idle_preferred_account_over_free(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            service = AccountService(JSONStorageBackend(Path(tmp_dir) / "accounts.json"))
+            service.add_account_items([
+                {"access_token": "token-free", "type": "free", "status": "正常", "quota": 3},
+                {"access_token": "token-plus", "type": "Plus", "status": "正常", "quota": 3},
+            ])
+            service.fetch_remote_info = lambda access_token, event="fetch_remote_info": service.get_account(access_token)
+
+            token = service.get_available_access_token_preferring_plan_types(
+                preferred_plan_types=("plus", "team", "pro"), wait_secs=1.0,
+            )
+
+            self.assertEqual(token, "token-plus")
+
+    def test_prefers_plan_type_falls_back_to_free_after_wait_when_preferred_busy(self) -> None:
+        original_concurrency = config.data.get("image_account_concurrency")
+        config.data["image_account_concurrency"] = 1
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                service = AccountService(JSONStorageBackend(Path(tmp_dir) / "accounts.json"))
+                service.add_account_items([
+                    {"access_token": "token-free", "type": "free", "status": "正常", "quota": 3},
+                    {"access_token": "token-plus", "type": "Plus", "status": "正常", "quota": 3},
+                ])
+                service.fetch_remote_info = lambda access_token, event="fetch_remote_info": service.get_account(access_token)
+
+                # 占满 Plus 账号唯一的并发槽位，使其暂时不可用
+                busy_token = service.get_available_access_token(plan_types=("plus", "team", "pro"))
+                self.assertEqual(busy_token, "token-plus")
+
+                start = time.monotonic()
+                token = service.get_available_access_token_preferring_plan_types(
+                    preferred_plan_types=("plus", "team", "pro"), wait_secs=0.3,
+                )
+                elapsed = time.monotonic() - start
+
+                self.assertEqual(token, "token-free")
+                self.assertGreaterEqual(elapsed, 0.25)
+        finally:
+            if original_concurrency is None:
+                config.data.pop("image_account_concurrency", None)
+            else:
+                config.data["image_account_concurrency"] = original_concurrency
+
+    def test_prefers_plan_type_waits_for_preferred_account_to_free_up(self) -> None:
+        original_concurrency = config.data.get("image_account_concurrency")
+        config.data["image_account_concurrency"] = 1
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                service = AccountService(JSONStorageBackend(Path(tmp_dir) / "accounts.json"))
+                service.add_account_items([
+                    {"access_token": "token-free", "type": "free", "status": "正常", "quota": 3},
+                    {"access_token": "token-plus", "type": "Plus", "status": "正常", "quota": 3},
+                ])
+                service.fetch_remote_info = lambda access_token, event="fetch_remote_info": service.get_account(access_token)
+
+                busy_token = service.get_available_access_token(plan_types=("plus", "team", "pro"))
+                self.assertEqual(busy_token, "token-plus")
+
+                def _release_shortly() -> None:
+                    time.sleep(0.15)
+                    service.release_image_slot(busy_token)
+
+                releaser = Thread(target=_release_shortly)
+                releaser.start()
+                try:
+                    token = service.get_available_access_token_preferring_plan_types(
+                        preferred_plan_types=("plus", "team", "pro"), wait_secs=2.0,
+                    )
+                finally:
+                    releaser.join()
+
+                self.assertEqual(token, "token-plus")
+        finally:
+            if original_concurrency is None:
+                config.data.pop("image_account_concurrency", None)
+            else:
+                config.data["image_account_concurrency"] = original_concurrency
 
     def test_refresh_accounts_can_remove_invalid_token_without_confirmation_delay(self) -> None:
         original_value = config.data.get("auto_remove_invalid_accounts")
