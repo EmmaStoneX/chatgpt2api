@@ -551,6 +551,7 @@ function getTurnStatusLabel(status: ImageTurnStatus) {
 
 const PROGRESS_LABELS: Record<string, string> = {
   getting_account: "确认可用账号",
+  engineering_prompt: "改写提示词中",
   uploading: "上传图片",
   bootstrapping: "预热首页",
   getting_token: "获取 token",

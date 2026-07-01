@@ -38,6 +38,15 @@ DEFAULT_IMAGE_STORAGE = {
     "public_base_url": "",
 }
 
+DEFAULT_IMAGE_PROMPT_ENGINEERING_PROMPT = (
+    "你是图像生成提示词专家。请把下面的生图需求改写成一段更详细、更适合图像生成模型理解的英文描述："
+    "完整保留原始需求的所有信息、结构和意图；如果内容中包含任何需要出现在图片里的文字"
+    "（无论中文、英文还是其他语言），必须原文逐字列出这些文字并用引号标注，"
+    "确保图像生成模型能精确复刻，不要翻译或改写这些文字本身；"
+    "除了引号内的文字外，其余描述用英文书写，说明画面构图、风格、配色、版式等细节。"
+    "只输出改写后的提示词本身，不要输出任何解释、前后缀或 markdown 标记。"
+)
+
 DEFAULT_CHAT_COMPLETION_CACHE = {
     "enabled": True,
     "ttl_seconds": 60,
@@ -431,6 +440,25 @@ class ConfigStore:
             return 5.0
 
     @property
+    def image_prompt_engineering_enabled(self) -> bool:
+        """生图前是否先用一次文本对话把 prompt 改写得更详细，缓解目标文字渲染乱码。"""
+        value = self.data.get("image_prompt_engineering_enabled", False)
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+
+    @property
+    def image_prompt_engineering_prompt(self) -> str:
+        return str(self.data.get("image_prompt_engineering_prompt") or DEFAULT_IMAGE_PROMPT_ENGINEERING_PROMPT)
+
+    @property
+    def image_prompt_engineering_timeout_secs(self) -> float:
+        try:
+            return max(1.0, float(self.data.get("image_prompt_engineering_timeout_secs", 30)))
+        except (TypeError, ValueError):
+            return 30.0
+
+    @property
     def image_parallel_generation(self) -> bool:
         value = self.data.get("image_parallel_generation", True)
         if isinstance(value, str):
@@ -555,6 +583,9 @@ class ConfigStore:
         data["image_poll_initial_wait_secs"] = self.image_poll_initial_wait_secs
         data["image_account_concurrency"] = self.image_account_concurrency
         data["image_paid_account_wait_secs"] = self.image_paid_account_wait_secs
+        data["image_prompt_engineering_enabled"] = self.image_prompt_engineering_enabled
+        data["image_prompt_engineering_prompt"] = self.image_prompt_engineering_prompt
+        data["image_prompt_engineering_timeout_secs"] = self.image_prompt_engineering_timeout_secs
         data["image_parallel_generation"] = self.image_parallel_generation
         data["auto_remove_invalid_accounts"] = self.auto_remove_invalid_accounts
         data["auto_remove_rate_limited_accounts"] = self.auto_remove_rate_limited_accounts

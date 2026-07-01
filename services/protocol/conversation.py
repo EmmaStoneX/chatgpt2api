@@ -223,6 +223,29 @@ def build_image_prompt(prompt: str, size: str | None, quality: str = "auto") -> 
     return f"{prompt.strip()}\n\n{''.join(hints)}" if hints else prompt
 
 
+def engineer_image_prompt(prompt: str) -> str:
+    """生图前用一次文本对话把 prompt 改写得更详细，缓解目标文字渲染乱码。
+
+    任何失败（超时/异常/空结果）都直接回退到原始 prompt，不阻断生图。
+    """
+    if not config.image_prompt_engineering_enabled or not prompt.strip():
+        return prompt
+    instruction = config.image_prompt_engineering_prompt
+    rewrite_request = ConversationRequest(
+        model="auto",
+        messages=[{"role": "user", "content": f"{instruction}\n\n---\n{prompt}"}],
+    )
+    try:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(collect_text, text_backend(), rewrite_request)
+            rewritten = future.result(timeout=config.image_prompt_engineering_timeout_secs)
+        rewritten = rewritten.strip()
+        return rewritten or prompt
+    except Exception as exc:
+        logger.warning({"event": "image_prompt_engineering_failed", "error": repr(exc)[:300]})
+        return prompt
+
+
 def encoding_for_model(model: str):
     try:
         return tiktoken.encoding_for_model(model)
@@ -663,7 +686,11 @@ def conversation_events(
     image_model = is_supported_image_model(model)
     history_text = "" if image_model else assistant_history_text(normalized)
     history_messages = [] if image_model else assistant_history_messages(normalized)
-    final_prompt = prompt_with_global_system(build_image_prompt(prompt, size, quality)) if image_model else prompt
+    working_prompt = prompt
+    if config.image_prompt_engineering_enabled and image_model and prompt and not images and not is_codex_image_model(model):
+        backend._report_progress("engineering_prompt")
+        working_prompt = engineer_image_prompt(prompt)
+    final_prompt = prompt_with_global_system(build_image_prompt(working_prompt, size, quality)) if image_model else prompt
     payloads = backend.stream_conversation(
         messages=normalized,
         model=model,

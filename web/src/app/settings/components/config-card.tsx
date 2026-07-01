@@ -29,6 +29,9 @@ export function ConfigCard() {
   const setImageSettleEnabled = useSettingsStore((state) => state.setImageSettleEnabled);
   const setImageSettleSecs = useSettingsStore((state) => state.setImageSettleSecs);
   const setImageTimeoutRetrySecs = useSettingsStore((state) => state.setImageTimeoutRetrySecs);
+  const setImagePromptEngineeringEnabled = useSettingsStore((state) => state.setImagePromptEngineeringEnabled);
+  const setImagePromptEngineeringPrompt = useSettingsStore((state) => state.setImagePromptEngineeringPrompt);
+  const setImagePromptEngineeringTimeoutSecs = useSettingsStore((state) => state.setImagePromptEngineeringTimeoutSecs);
   const setAutoRemoveInvalidAccounts = useSettingsStore((state) => state.setAutoRemoveInvalidAccounts);
   const setAutoRemoveRateLimitedAccounts = useSettingsStore((state) => state.setAutoRemoveRateLimitedAccounts);
   const setAutoReloginAfterRefresh = useSettingsStore((state) => state.setAutoReloginAfterRefresh);
@@ -215,6 +218,38 @@ export function ConfigCard() {
               disabled={!config?.image_settle_enabled}
             />
             <p className="text-xs text-stone-500">单位秒，找到图片后等待多久再次确认。需配合图片二次确认机制使用。</p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3">
+              <Checkbox
+                checked={Boolean(config?.image_prompt_engineering_enabled)}
+                onCheckedChange={(checked) => setImagePromptEngineeringEnabled(Boolean(checked))}
+              />
+              <span className="text-sm text-stone-700">生图前改写提示词</span>
+            </div>
+            <p className="text-xs text-stone-500">开启后每次生图前先用一次文本对话把提示词改写得更详细，可缓解图片中文字渲染乱码，但会增加生图耗时。</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-stone-700">改写超时时间</label>
+            <Input
+              value={String(config?.image_prompt_engineering_timeout_secs || "30")}
+              onChange={(event) => setImagePromptEngineeringTimeoutSecs(event.target.value)}
+              placeholder="30"
+              className="border-stone-200 bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!config?.image_prompt_engineering_enabled}
+            />
+            <p className="text-xs text-stone-500">单位秒，改写超时后自动回退使用原始提示词，不影响生图。</p>
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm text-stone-700">改写指令</label>
+            <Textarea
+              value={String(config?.image_prompt_engineering_prompt || "")}
+              onChange={(event) => setImagePromptEngineeringPrompt(event.target.value)}
+              placeholder="你是图像生成提示词专家，请把下面的生图需求改写成更详细的提示词……"
+              className="min-h-28 rounded-xl border-stone-200 bg-white font-mono text-xs shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!config?.image_prompt_engineering_enabled}
+            />
+            <p className="text-xs text-stone-500">留空则使用内置默认指令。</p>
           </div>
           <div className="flex gap-4 md:col-span-2">
             <div className="flex-1 space-y-2">

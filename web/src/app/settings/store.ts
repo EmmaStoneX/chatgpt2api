@@ -305,6 +305,9 @@ type SettingsStore = {
   setImageCheckBeforeHitEnabled: (value: boolean) => void;
   setImageSettleSecs: (value: string) => void;
   setImageTimeoutRetrySecs: (value: string) => void;
+  setImagePromptEngineeringEnabled: (value: boolean) => void;
+  setImagePromptEngineeringPrompt: (value: string) => void;
+  setImagePromptEngineeringTimeoutSecs: (value: string) => void;
   setAutoRemoveInvalidAccounts: (value: boolean) => void;
   setAutoRemoveRateLimitedAccounts: (value: boolean) => void;
   setAutoReloginAfterRefresh: (value: boolean) => void;
@@ -566,6 +569,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   setImageTimeoutRetrySecs: (value) => {
     set((state) => state.config ? { config: { ...state.config, image_timeout_retry_secs: value } } : {});
+  },
+
+  setImagePromptEngineeringEnabled: (value) => {
+    set((state) => state.config ? { config: { ...state.config, image_prompt_engineering_enabled: value } } : {});
+  },
+
+  setImagePromptEngineeringPrompt: (value) => {
+    set((state) => state.config ? { config: { ...state.config, image_prompt_engineering_prompt: value } } : {});
+  },
+
+  setImagePromptEngineeringTimeoutSecs: (value) => {
+    set((state) => state.config ? { config: { ...state.config, image_prompt_engineering_timeout_secs: value } } : {});
   },
 
   setAutoRemoveInvalidAccounts: (value) => {
